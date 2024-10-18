@@ -8,7 +8,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/desmos-labs/cosmos-go-wallet v0.0.0-00010101000000-000000000000
 	github.com/ethereum/go-ethereum v1.13.15
-	github.com/jackalLabs/canine-chain/v4 v4.1.0-beta.2
+	github.com/jackalLabs/canine-chain/v4 v4.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
