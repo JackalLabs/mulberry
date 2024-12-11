@@ -15,7 +15,7 @@ COPY . .
 RUN make install
 
 # Use a smaller image for the final runtime container
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # Set up necessary environment variables
 ENV MULBERRY_HOME /root/.mulberry
