@@ -28,6 +28,12 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /root/
 
+# Copy the shared library into the container
+COPY lib/libwasmvm.aarch64.so /usr/local/lib/
+
+# Update the linker cache
+RUN ldconfig
+
 # Copy the binary and configuration files from the builder
 COPY --from=builder /go/bin/mulberry /usr/local/bin/mulberry
 COPY --from=builder /app/config /root/.mulberry
