@@ -23,16 +23,20 @@ ENV MULBERRY_HOME /root/.mulberry
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /root/
-
-# Copy the shared library into the container
-COPY lib/libwasmvm.aarch64.so /usr/local/lib/
+# Download the libwasmvm.aarch64.so file directly from GitHub
+WORKDIR /tmp
+RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v2.1.4/libwasmvm.aarch64.so \
+    -O /usr/local/lib/libwasmvm.aarch64.so && \
+    chmod 755 /usr/local/lib/libwasmvm.aarch64.so
 
 # Update the linker cache
 RUN ldconfig
+
+# Set the working directory
+WORKDIR /root/
 
 # Copy the binary and configuration files from the builder
 COPY --from=builder /go/bin/mulberry /usr/local/bin/mulberry
