@@ -11,8 +11,8 @@ RUN go mod download
 # Copy the entire project
 COPY . .
 
-# Build the Mulberry server binary
-RUN go build -o mulberry main.go
+# Build the application using the Makefile
+RUN make install
 
 # Use a smaller image for the final runtime container
 FROM debian:bullseye-slim
@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/
 
 # Copy the binary and configuration files from the builder
-COPY --from=builder /app/mulberry /usr/local/bin/mulberry
+COPY --from=builder /go/bin/mulberry /usr/local/bin/mulberry
 COPY --from=builder /app/config /root/.mulberry
 
 # Expose ports - not sure we need all of these 
