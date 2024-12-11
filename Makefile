@@ -1,6 +1,6 @@
 export GO111MODULE = on
 
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+VERSION := $(shell (git describe --tags 2>/dev/null || echo "0.0.0") | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 
 ###############################################################################
