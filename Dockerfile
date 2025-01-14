@@ -28,12 +28,12 @@ RUN apt-get update && apt-get install -y \
 
 # Download the libwasmvm.aarch64.so file directly from GitHub
 WORKDIR /tmp
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v2.1.4/libwasmvm.aarch64.so \
-    -O /usr/local/lib/libwasmvm.aarch64.so && \
-    chmod 755 /usr/local/lib/libwasmvm.aarch64.so
+RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v2.1.4/libwasmvm.`uname -m`.so \
+    -O /usr/local/lib/libwasmvm.`uname -m`.so && \
+    chmod 755 /usr/local/lib/libwasmvm.`uname -m`.so
 
 # Update the linker cache
-RUN ldconfig
+RUN ldconfig /usr/local/lib/
 
 # Set the working directory
 WORKDIR /root/
