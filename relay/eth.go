@@ -46,6 +46,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 		wsClient, err := ethclient.Dial(network.WS)
 		if err != nil {
 			log.Printf("Failed to connect to the Ethereum WS client, retrying in 5 seconds: %v", err)
+			log.Printf("ws client: %s", network.WS)
 
 			if wsClient != nil {
 				wsClient.Close()
