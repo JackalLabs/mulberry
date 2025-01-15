@@ -36,19 +36,30 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 
 	stopped := false
 	for !stopped {
-
 		rpcClient, err := ethclient.Dial(network.RPC)
 		if err != nil {
-			log.Printf("Failed to connect to the Ethereum rpc client, retrying in 5 seconds: %v", err)
+			log.Printf("Failed to connect to the Ethereum RPC client, retrying in 5 seconds: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
 		wsClient, err := ethclient.Dial(network.WS)
+		if err != nil {
+			log.Printf("Failed to connect to the Ethereum WS client, retrying in 5 seconds: %v", err)
+
+			if wsClient != nil {
+				wsClient.Close()
+			}
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
 		sub, logs, err = subscribeLogs(wsClient, query)
 		if err != nil {
 			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
-			rpcClient.Close()
+			if wsClient != nil {
+				wsClient.Close()
+			}
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -62,6 +73,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 				if sub != nil {
 					sub.Unsubscribe()
 				}
+				wsClient.Close()
 				wsClient.Close()
 			}()
 
@@ -77,8 +89,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 				case vLog := <-logs:
 					log.Printf("Log received: %s", vLog.Address.Hex())
 
-					go func() { // run async
-						// Ensure transaction is confirmed
+					go func(vLog types.Log) {
 						err := waitForReceipt(rpcClient, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
 								if l.Address.Hex() == contractAddress.Hex() {
@@ -87,14 +98,13 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 							}
 						})
 						if err != nil {
-							log.Printf("error getting reciept for tx %s: %v", vLog.TxHash.String(), err)
+							log.Printf("Error getting receipt for tx %s: %v", vLog.TxHash.Hex(), err)
 						}
-					}()
-
+					}(vLog)
 				}
 			}
 		}()
-
 	}
+
 	wg.Done()
 }
