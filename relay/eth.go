@@ -37,17 +37,18 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 	stopped := false
 	for !stopped {
 
-		client, err := ethclient.Dial(network.RPC)
+		rpcClient, err := ethclient.Dial(network.RPC)
 		if err != nil {
-			log.Printf("Failed to connect to the Ethereum client, retrying in 5 seconds: %v", err)
+			log.Printf("Failed to connect to the Ethereum rpc client, retrying in 5 seconds: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		sub, logs, err = subscribeLogs(client, query)
+		wsClient, err := ethclient.Dial(network.WS)
+		sub, logs, err = subscribeLogs(wsClient, query)
 		if err != nil {
 			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
-			client.Close()
+			rpcClient.Close()
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -61,7 +62,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 				if sub != nil {
 					sub.Unsubscribe()
 				}
-				client.Close()
+				wsClient.Close()
 			}()
 
 			for {
@@ -78,7 +79,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 
 					go func() { // run async
 						// Ensure transaction is confirmed
-						err := waitForReceipt(client, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
+						err := waitForReceipt(rpcClient, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
 								if l.Address.Hex() == contractAddress.Hex() {
 									handleLog(l, a.w, a.q, network.ChainID, jackalContract)
