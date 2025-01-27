@@ -36,7 +36,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 
 	stopped := false
 	for !stopped {
-		rpcClient, err := ethclient.Dial(network.RPC)
+		_, err := ethclient.Dial(network.RPC)
 		if err != nil {
 			log.Printf("Failed to connect to the Ethereum RPC client, retrying in 5 seconds: %v", err)
 			time.Sleep(5 * time.Second)
@@ -91,9 +91,9 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 					log.Printf("Log received: %s", vLog.Address.Hex())
 
 					go func(vLog types.Log) {
-						err := waitForReceipt(rpcClient, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
+						err := waitForReceipt(wsClient, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
-								if l.Address.Hex() == contractAddress.Hex() {
+								if l.Address.Hex() == contractAddress.Hex() && len(l.Data) > 0 {
 									handleLog(l, a.w, a.q, network.ChainID, jackalContract)
 								}
 							}
