@@ -84,7 +84,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 
 	e, err := eventABI.Unpack("PostedFile", vLog.Data)
 	if err != nil {
-		log.Fatalf("Failed to unpack log data: %v", err)
+		log.Fatalf("Failed to unpack log data normally: %v", err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 
 	err = eventABI.UnpackIntoInterface(&event, "PostedFile", vLog.Data)
 	if err != nil {
-		log.Fatalf("Failed to unpack log data: %v", err)
+		log.Fatalf("Failed to unpack log data into interface: %v", err)
 		return
 	}
 
