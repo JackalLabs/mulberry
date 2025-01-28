@@ -75,7 +75,6 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 					sub.Unsubscribe()
 				}
 				wsClient.Close()
-				wsClient.Close()
 			}()
 
 			for {
