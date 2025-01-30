@@ -20,6 +20,7 @@ type JackalConfig struct {
 type NetworkConfig struct {
 	Name     string `yaml:"name" mapstructure:"name"`
 	RPC      string `yaml:"rpc" mapstructure:"rpc"`
+	WS       string `yaml:"ws" mapstructure:"ws"`
 	Contract string `yaml:"contract" mapstructure:"contract"`
 	ChainID  uint64 `yaml:"chain_id" mapstructure:"chain_id"`
 	Finality uint64 `yaml:"finality" mapstructure:"finality"`
@@ -36,14 +37,16 @@ func DefaultConfig() Config {
 		NetworksConfig: []NetworkConfig{
 			{
 				Name:     "Ethereum Sepolia",
-				RPC:      "wss://ethereum-sepolia-rpc.publicnode.com",
+				RPC:      "https://ethereum-sepolia-rpc.publicnode.com",
+				WS:       "ws://127.0.0.1:8545",
 				Contract: "0x730fdF2ee985Ac0F7792f90cb9e1E5485d340208",
 				ChainID:  11155111,
 				Finality: 2,
 			},
 			{
 				Name:     "Base Sepolia",
-				RPC:      "wss://base-sepolia-rpc.publicnode.com",
+				RPC:      "https://base-sepolia-rpc.publicnode.com",
+				WS:       "ws://127.0.0.1:8545",
 				Contract: "0x20738B8eaB736f24c7881bA48263ee60Eb2a0A2a",
 				ChainID:  84532,
 				Finality: 2,

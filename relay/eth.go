@@ -36,18 +36,31 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 
 	stopped := false
 	for !stopped {
-
-		client, err := ethclient.Dial(network.RPC)
+		_, err := ethclient.Dial(network.RPC)
 		if err != nil {
-			log.Printf("Failed to connect to the Ethereum client, retrying in 5 seconds: %v", err)
+			log.Printf("Failed to connect to the Ethereum RPC client, retrying in 5 seconds: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		sub, logs, err = subscribeLogs(client, query)
+		wsClient, err := ethclient.Dial(network.WS)
+		if err != nil {
+			log.Printf("Failed to connect to the Ethereum WS client, retrying in 5 seconds: %v", err)
+			log.Printf("ws client: %s", network.WS)
+
+			if wsClient != nil {
+				wsClient.Close()
+			}
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		sub, logs, err = subscribeLogs(wsClient, query)
 		if err != nil {
 			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
-			client.Close()
+			if wsClient != nil {
+				wsClient.Close()
+			}
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -61,7 +74,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 				if sub != nil {
 					sub.Unsubscribe()
 				}
-				client.Close()
+				wsClient.Close()
 			}()
 
 			for {
@@ -76,24 +89,22 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 				case vLog := <-logs:
 					log.Printf("Log received: %s", vLog.Address.Hex())
 
-					go func() { // run async
-						// Ensure transaction is confirmed
-						err := waitForReceipt(client, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
+					go func(vLog types.Log) {
+						err := waitForReceipt(wsClient, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
-								if l.Address.Hex() == contractAddress.Hex() {
+								if l.Address.Hex() == contractAddress.Hex() && len(l.Data) > 0 {
 									handleLog(l, a.w, a.q, network.ChainID, jackalContract)
 								}
 							}
 						})
 						if err != nil {
-							log.Printf("error getting reciept for tx %s: %v", vLog.TxHash.String(), err)
+							log.Printf("Error getting receipt for tx %s: %v", vLog.TxHash.Hex(), err)
 						}
-					}()
-
+					}(vLog)
 				}
 			}
 		}()
-
 	}
+
 	wg.Done()
 }
