@@ -5,12 +5,18 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 abstract contract Jackal {
     event PostedFile(address sender, string merkle, uint64 size);
+    event BoughtStorage(address from, string for_address, uint64 duration_days, uint64 size_bytes);
 
-    function getPrice() public view virtual returns(int);
+    function getPrice() public view virtual returns (int256);
 
     mapping(address => mapping(address => bool)) public allowances;
 
-    function getAllowance(address from, address to) public view returns(bool) {
+    modifier validAddress() {
+        require(msg.sender != address(0), "Invalid sender address");
+        _;
+    }
+
+    function getAllowance(address from, address to) public view returns (bool) {
         if (from == to) {
             return true;
         }
@@ -25,15 +31,13 @@ abstract contract Jackal {
         allowances[msg.sender][allow] = false;
     }
 
-    function getStoragePrice(uint64 filesize) public view returns (uint256) {
+    function getStoragePrice(uint64 filesize, uint256 months) public view returns (uint256) {
         uint256 price = uint256(getPrice());
-
         uint256 storagePrice = 15; // price at 8 decimal places
         uint256 multiplier = 2;
-        uint256 months = 200 * 12;
 
         uint256 fs = filesize;
-        if (fs  <= 1024 * 1024) {
+        if (fs <= 1024 * 1024) {
             fs = 1024 * 1024; // minimum file size of one MB for pricing
         }
 
@@ -49,18 +53,32 @@ abstract contract Jackal {
         return p;
     }
 
-    function postFileFrom(address from, string memory merkle, uint64 filesize) public payable{
-        require(msg.sender != address(0), "Invalid sender address");
+    function postFileFrom(address from, string memory merkle, uint64 filesize) public payable validAddress {
         require(getAllowance(msg.sender, from), "No allowance for this contract set");
 
-        uint256 pE = getStoragePrice(filesize);
+        uint256 pE = getStoragePrice(filesize, 2400); // 12 * 200 months
 
-        require(msg.value >= pE, string.concat("Incorrect payment amount, need ", Strings.toString(pE), " wei"));
+        require(msg.value >= pE, string.concat("Insufficient payment, need ", Strings.toString(pE), " wei"));
 
         emit PostedFile(from, merkle, filesize);
     }
 
-    function postFile(string memory merkle, uint64 filesize) public payable{
+    function postFile(string memory merkle, uint64 filesize) public payable {
         postFileFrom(msg.sender, merkle, filesize);
+    }
+
+    function buyStorageFrom(address from, string memory for_address, uint64 duration_days, uint64 size_bytes)
+        public
+        payable
+        validAddress
+    {
+        // do i need to check allowance?
+        uint256 pE = getStoragePrice(size_bytes, duration_days / 30); // months
+        require(msg.value >= pE, string.concat("Insufficient payment, need ", Strings.toString(pE), " wei"));
+        emit BoughtStorage(from, for_address, duration_days, size_bytes);
+    }
+
+    function buyStorage(string memory for_address, uint64 duration_days, uint64 size_bytes) public payable {
+        buyStorageFrom(msg.sender, for_address, duration_days, size_bytes);
     }
 }
