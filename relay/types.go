@@ -32,4 +32,5 @@ type BoughtStorage struct {
 	ForAddress   string
 	DurationDays uint64
 	SizeBytes    uint64
+	Referral     string
 }

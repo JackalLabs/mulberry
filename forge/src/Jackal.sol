@@ -5,7 +5,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 abstract contract Jackal {
     event PostedFile(address sender, string merkle, uint64 size);
-    event BoughtStorage(address from, string for_address, uint64 duration_days, uint64 size_bytes);
+    event BoughtStorage(address from, string for_address, uint64 duration_days, uint64 size_bytes, string referral);
 
     function getPrice() public view virtual returns (int256);
 
@@ -13,6 +13,11 @@ abstract contract Jackal {
 
     modifier validAddress() {
         require(msg.sender != address(0), "Invalid sender address");
+        _;
+    }
+
+    modifier hasAllowance(address from) {
+        require(getAllowance(msg.sender, from), "No allowance set for contract");
         _;
     }
 
@@ -53,13 +58,14 @@ abstract contract Jackal {
         return p;
     }
 
-    function postFileFrom(address from, string memory merkle, uint64 filesize) public payable validAddress {
-        require(getAllowance(msg.sender, from), "No allowance for this contract set");
-
+    function postFileFrom(address from, string memory merkle, uint64 filesize)
+        public
+        payable
+        validAddress
+        hasAllowance(from)
+    {
         uint256 pE = getStoragePrice(filesize, 2400); // 12 * 200 months
-
         require(msg.value >= pE, string.concat("Insufficient payment, need ", Strings.toString(pE), " wei"));
-
         emit PostedFile(from, merkle, filesize);
     }
 
@@ -67,18 +73,22 @@ abstract contract Jackal {
         postFileFrom(msg.sender, merkle, filesize);
     }
 
-    function buyStorageFrom(address from, string memory for_address, uint64 duration_days, uint64 size_bytes)
-        public
-        payable
-        validAddress
-    {
-        // do i need to check allowance?
+    function buyStorageFrom(
+        address from,
+        string memory for_address,
+        uint64 duration_days,
+        uint64 size_bytes,
+        string memory referral
+    ) public payable validAddress hasAllowance(from) {
         uint256 pE = getStoragePrice(size_bytes, duration_days / 30); // months
         require(msg.value >= pE, string.concat("Insufficient payment, need ", Strings.toString(pE), " wei"));
-        emit BoughtStorage(from, for_address, duration_days, size_bytes);
+        emit BoughtStorage(from, for_address, duration_days, size_bytes, referral);
     }
 
-    function buyStorage(string memory for_address, uint64 duration_days, uint64 size_bytes) public payable {
-        buyStorageFrom(msg.sender, for_address, duration_days, size_bytes);
+    function buyStorage(string memory for_address, uint64 duration_days, uint64 size_bytes, string memory referral)
+        public
+        payable
+    {
+        buyStorageFrom(msg.sender, for_address, duration_days, size_bytes, referral);
     }
 }

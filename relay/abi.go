@@ -98,8 +98,8 @@ func generateBoughtStorageMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint6
 			ForAddress:   event.ForAddress,
 			DurationDays: int64(event.DurationDays),
 			Bytes:        int64(event.SizeBytes),
-			PaymentDenom: "eth",
-			Referral:     "mulberry relayer",
+			PaymentDenom: "ujkl",
+			Referral:     event.Referral,
 		},
 	}
 
