@@ -42,7 +42,6 @@ func init() {
 
 func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event PostedFile) (err error) {
 	log.Printf("Event details: %+v", event)
-
 	evmAddress := event.Sender.String()
 
 	merkleRoot, err := hex.DecodeString(event.Merkle)
@@ -90,7 +89,30 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 }
 
 func generateBoughtStorageMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event BoughtStorage) (err error) {
-	panic("unimplemented")
+	log.Printf("Event details: %+v", event)
+	evmAddress := event.From.String()
+	log.Printf("Relaying for %s\n", event.From.String())
+
+	storageMsg := evmTypes.ExecuteMsg{
+		BuyStorage: &evmTypes.ExecuteMsgBuyStorage{
+			ForAddress:   event.ForAddress,
+			DurationDays: int64(event.DurationDays),
+			Bytes:        int64(event.SizeBytes),
+			PaymentDenom: "eth",
+			Referral:     "mulberry relayer",
+		},
+	}
+
+	factoryMsg = evmTypes.ExecuteFactoryMsg{
+		CallBindings: &evmTypes.ExecuteMsgCallBindings{
+			EvmAddress: &evmAddress,
+			Msg:        &storageMsg,
+		},
+	}
+
+	cost = q.GetCost(int64(event.SizeBytes), int64(event.DurationDays)*24) // double check cost calculation
+	cost = int64(float64(cost) * 1.2)
+	return
 }
 
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
