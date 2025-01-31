@@ -2,12 +2,13 @@ package relay
 
 import (
 	"context"
-	_ "embed"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"log"
 	"strings"
+
+	_ "embed"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/JackalLabs/mulberry/jackal/uploader"
@@ -19,51 +20,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var ABI = `[
-    {
-      "type": "function",
-      "name": "postFile",
-      "inputs": [
-        {
-          "name": "merkle",
-          "type": "string",
-          "internalType": "string"
-        },
-        {
-          "name": "filesize",
-          "type": "uint64",
-          "internalType": "uint64"
-        }
-      ],
-      "outputs": [],
-      "stateMutability": "payable"
-    },
-    {
-      "type": "event",
-      "name": "PostedFile",
-      "inputs": [
-        {
-          "name": "sender",
-          "type": "address",
-          "indexed": false,
-          "internalType": "address"
-        },
-        {
-          "name": "merkle",
-          "type": "string",
-          "indexed": false,
-          "internalType": "string"
-        },
-        {
-          "name": "size",
-          "type": "uint64",
-          "indexed": false,
-          "internalType": "uint64"
-        }
-      ],
-      "anonymous": false
-    }
-  ]`
+//go:embed jackal.abi
+var ABI string
+
+// from `forge inspect Jackal abi`
 
 var eventABI abi.ABI
 
