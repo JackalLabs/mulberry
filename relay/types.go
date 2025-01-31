@@ -4,6 +4,7 @@ import (
 	"github.com/JackalLabs/mulberry/config"
 	"github.com/JackalLabs/mulberry/jackal/uploader"
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type App struct {
@@ -18,4 +19,17 @@ var ChainIDS = map[uint64]string{
 	137:   "Polygon",
 	10:    "OP",
 	42161: "Arbitrum",
+}
+
+type PostedFile struct {
+	Sender common.Address
+	Merkle string
+	Size   uint64
+}
+
+type BoughtStorage struct {
+	From         common.Address
+	ForAddress   string
+	DurationDays uint64
+	SizeBytes    uint64
 }
