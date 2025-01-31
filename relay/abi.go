@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -59,11 +60,19 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 	log.Printf("Relaying for %s\n", event.Sender.String())
 
 	var hours int64 = 100 * 365 * 24
-
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
-
 	var maxProofs int64 = 3
 	fileSize := int64(event.Size)
+
+	note := make(map[string]any)
+	json.Unmarshal([]byte(event.Note), &note)
+	note["relayed"] = map[string]any{"chain_id": chainRep(chainID), "for": evmAddress}
+	newNote, err := json.Marshal(note)
+	if err != nil {
+		log.Printf("Failed to add memo: %v", err)
+		return
+	}
+
 	storageMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
 			Merkle:        merkleBase64,
@@ -71,7 +80,7 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 			ProofInterval: 3600,
 			ProofType:     0,
 			MaxProofs:     maxProofs,
-			Note:          fmt.Sprintf("{\"memo\":\"Relayed from %s for %s\"}", chainRep(chainID), evmAddress),
+			Note:          string(newNote),
 			Expires:       abci.Response.LastBlockHeight + ((hours * 60 * 60) / 6),
 		},
 	}
@@ -181,6 +190,5 @@ func chainRep(id uint64) string {
 	if len(s) == 0 {
 		return fmt.Sprintf("%d", id)
 	}
-
 	return s
 }

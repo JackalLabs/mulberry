@@ -25,6 +25,7 @@ type PostedFile struct {
 	Sender common.Address
 	Merkle string
 	Size   uint64
+	Note   string
 }
 
 type BoughtStorage struct {
