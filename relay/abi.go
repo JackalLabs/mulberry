@@ -65,7 +65,12 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 	fileSize := int64(event.Size)
 
 	note := make(map[string]any)
-	json.Unmarshal([]byte(event.Note), &note)
+	err = json.Unmarshal([]byte(event.Note), &note)
+	if err != nil && event.Note != "" {
+		log.Printf("Could not unmarshal: %v", err)
+		return
+	}
+
 	note["relayed"] = map[string]any{"chain_id": chainRep(chainID), "for": evmAddress}
 	newNote, err := json.Marshal(note)
 	if err != nil {
