@@ -54,6 +54,11 @@
         "name": "size_bytes",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "referral",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [],
@@ -82,6 +87,11 @@
         "name": "size_bytes",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "referral",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [],
@@ -161,6 +171,11 @@
         "name": "filesize",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [],
@@ -184,6 +199,11 @@
         "name": "filesize",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [],
@@ -229,6 +249,12 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      },
+      {
+        "name": "referral",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false
@@ -254,6 +280,12 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false
