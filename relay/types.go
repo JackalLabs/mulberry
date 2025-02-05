@@ -22,10 +22,11 @@ var ChainIDS = map[uint64]string{
 }
 
 type PostedFile struct {
-	Sender common.Address
-	Merkle string
-	Size   uint64
-	Note   string
+	Sender  common.Address
+	Merkle  string
+	Size    uint64
+	Note    string
+	Expires uint64
 }
 
 type BoughtStorage struct {

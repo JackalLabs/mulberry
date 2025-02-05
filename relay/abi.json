@@ -176,6 +176,11 @@
         "name": "note",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "expires",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "outputs": [],
@@ -204,6 +209,11 @@
         "name": "note",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "expires",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "outputs": [],
@@ -286,6 +296,12 @@
         "type": "string",
         "indexed": false,
         "internalType": "string"
+      },
+      {
+        "name": "expires",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
       }
     ],
     "anonymous": false

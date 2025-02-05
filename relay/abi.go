@@ -20,7 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-//go:embed jackal.abi
+//go:embed abi.json
 var ABI string
 
 // from `forge inspect Jackal abi`
@@ -59,7 +59,6 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 
 	log.Printf("Relaying for %s\n", event.Sender.String())
 
-	var hours int64 = 100 * 365 * 24
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 	var maxProofs int64 = 3
 	fileSize := int64(event.Size)
@@ -78,15 +77,18 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		return
 	}
 
+	// calculate expires field (event.Expires is the number of days)
+	expires := abci.Response.LastBlockHeight + ((int64(event.Expires) * 24 * 60 * 60) / 6)
+
 	storageMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
 			Merkle:        merkleBase64,
 			FileSize:      fileSize,
-			ProofInterval: 3600,
+			ProofInterval: 7200,
 			ProofType:     0,
 			MaxProofs:     maxProofs,
 			Note:          string(newNote),
-			Expires:       abci.Response.LastBlockHeight + ((hours * 60 * 60) / 6),
+			Expires:       expires,
 		},
 	}
 
@@ -97,7 +99,7 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		},
 	}
 
-	cost = q.GetCost(fileSize*maxProofs, hours)
+	cost = q.GetCost(fileSize*maxProofs, int64(event.Expires)*24)
 	cost = int64(float64(cost) * 1.2)
 	return
 }
