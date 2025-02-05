@@ -64,6 +64,7 @@ abstract contract Jackal {
         validAddress
         hasAllowance(from)
     {
+        require(expires >= 30);
         uint256 pE = getStoragePrice(filesize, 2400); // 12 * 200 months
         require(msg.value >= pE, string.concat("Insufficient payment, need ", Strings.toString(pE), " wei"));
         emit PostedFile(from, merkle, filesize, note, expires);
