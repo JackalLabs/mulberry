@@ -1,8 +1,9 @@
 package types
 
 type ExecuteMsg struct {
-	PostKey  *ExecuteMsgPostKey  `json:"post_key,omitempty"`
-	PostFile *ExecuteMsgPostFile `json:"post_file,omitempty"`
+	PostKey    *ExecuteMsgPostKey    `json:"post_key,omitempty"`
+	PostFile   *ExecuteMsgPostFile   `json:"post_file,omitempty"`
+	BuyStorage *ExecuteMsgBuyStorage `json:"buy_storage,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -17,6 +18,15 @@ type ExecuteMsgPostFile struct {
 	MaxProofs     int64  `json:"max_proofs"`
 	Expires       int64  `json:"expires"`
 	Note          string `json:"note"`
+}
+
+type ExecuteMsgBuyStorage struct {
+	Creator      string `json:"creator,omitempty"`
+	ForAddress   string `json:"for_address,omitempty"`
+	DurationDays int64  `json:"duration_days,omitempty"`
+	Bytes        int64  `json:"bytes,omitempty"`
+	PaymentDenom string `json:"payment_denom,omitempty"`
+	Referral     string `json:"referral,omitempty"`
 }
 
 // ToString returns a string representation of the message

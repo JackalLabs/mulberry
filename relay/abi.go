@@ -2,12 +2,14 @@ package relay
 
 import (
 	"context"
-	_ "embed"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
+
+	_ "embed"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/JackalLabs/mulberry/jackal/uploader"
@@ -15,57 +17,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var ABI = `[
-    {
-      "type": "function",
-      "name": "postFile",
-      "inputs": [
-        {
-          "name": "merkle",
-          "type": "string",
-          "internalType": "string"
-        },
-        {
-          "name": "filesize",
-          "type": "uint64",
-          "internalType": "uint64"
-        }
-      ],
-      "outputs": [],
-      "stateMutability": "payable"
-    },
-    {
-      "type": "event",
-      "name": "PostedFile",
-      "inputs": [
-        {
-          "name": "sender",
-          "type": "address",
-          "indexed": false,
-          "internalType": "address"
-        },
-        {
-          "name": "merkle",
-          "type": "string",
-          "indexed": false,
-          "internalType": "string"
-        },
-        {
-          "name": "size",
-          "type": "uint64",
-          "indexed": false,
-          "internalType": "uint64"
-        }
-      ],
-      "anonymous": false
-    }
-  ]`
+//go:embed abi.json
+var ABI string
 
-var eventABI abi.ABI
+// from `forge inspect Jackal abi`
+
+var (
+	eventABI    abi.ABI
+	factoryMsg  evmTypes.ExecuteFactoryMsg
+	cost        int64
+	errUnpack   error
+	errGenerate error
+)
 
 func init() {
 	var err error
@@ -75,79 +41,136 @@ func init() {
 	}
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
-	event := struct {
-		Sender common.Address
-		Merkle string
-		Size   uint64
-	}{}
-
-	e, err := eventABI.Unpack("PostedFile", vLog.Data)
-	if err != nil {
-		log.Fatalf("Failed to unpack log data normally: %v", err)
-		return
-	}
-
-	fmt.Println(len(e))
-
-	err = eventABI.UnpackIntoInterface(&event, "PostedFile", vLog.Data)
-	if err != nil {
-		log.Fatalf("Failed to unpack log data into interface: %v", err)
-		return
-	}
-
+func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event PostedFile) (err error) {
 	log.Printf("Event details: %+v", event)
-
 	evmAddress := event.Sender.String()
 
 	merkleRoot, err := hex.DecodeString(event.Merkle)
 	if err != nil {
-		log.Fatalf("Failed to decode merkle: %v", err)
+		log.Printf("Failed to decode merkle: %v", err)
 		return
 	}
 
 	abci, err := w.Client.RPCClient.ABCIInfo(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to query ABCI: %v", err)
+		log.Printf("Failed to query ABCI: %v", err)
 		return
 	}
 
 	log.Printf("Relaying for %s\n", event.Sender.String())
 
-	var hours int64 = 100 * 365 * 24
-
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
-
 	var maxProofs int64 = 3
 	fileSize := int64(event.Size)
+
+	note := make(map[string]any)
+	err = json.Unmarshal([]byte(event.Note), &note)
+	if err != nil && event.Note != "" {
+		log.Printf("Could not unmarshal: %v", err)
+		return
+	}
+
+	note["relayed"] = map[string]any{"chain_id": chainRep(chainID), "for": evmAddress}
+	newNote, err := json.Marshal(note)
+	if err != nil {
+		log.Printf("Failed to add memo: %v", err)
+		return
+	}
+
+	// calculate expires field (event.Expires is the number of days)
+	expires := int64(0)
+	if event.Expires != 0 {
+		expires = abci.Response.LastBlockHeight + ((int64(event.Expires) * 24 * 60 * 60) / 6)
+	}
+
 	storageMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
 			Merkle:        merkleBase64,
 			FileSize:      fileSize,
-			ProofInterval: 3600,
+			ProofInterval: 7200,
 			ProofType:     0,
 			MaxProofs:     maxProofs,
-			Note:          fmt.Sprintf("{\"memo\":\"Relayed from %s for %s\"}", chainRep(chainID), evmAddress),
-			Expires:       abci.Response.LastBlockHeight + ((hours * 60 * 60) / 6),
+			Note:          string(newNote),
+			Expires:       expires,
 		},
 	}
 
-	factoryMsg := evmTypes.ExecuteFactoryMsg{
+	factoryMsg = evmTypes.ExecuteFactoryMsg{
 		CallBindings: &evmTypes.ExecuteMsgCallBindings{
 			EvmAddress: &evmAddress,
 			Msg:        &storageMsg,
 		},
 	}
 
-	cost := q.GetCost(fileSize*maxProofs, hours)
+	cost = q.GetCost(fileSize*maxProofs, int64(event.Expires)*24)
 	cost = int64(float64(cost) * 1.2)
-	c := sdk.NewInt64Coin("ujkl", cost)
+	return
+}
 
+func generateBoughtStorageMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event BoughtStorage) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress := event.From.String()
+	log.Printf("Relaying for %s\n", event.From.String())
+
+	storageMsg := evmTypes.ExecuteMsg{
+		BuyStorage: &evmTypes.ExecuteMsgBuyStorage{
+			ForAddress:   event.ForAddress,
+			DurationDays: int64(event.DurationDays),
+			Bytes:        int64(event.SizeBytes),
+			PaymentDenom: "ujkl",
+			Referral:     event.Referral,
+		},
+	}
+
+	factoryMsg = evmTypes.ExecuteFactoryMsg{
+		CallBindings: &evmTypes.ExecuteMsgCallBindings{
+			EvmAddress: &evmAddress,
+			Msg:        &storageMsg,
+		},
+	}
+
+	cost = q.GetCost(int64(event.SizeBytes), int64(event.DurationDays)*24) // double check cost calculation
+	cost = int64(float64(cost) * 1.2)
+	return
+}
+
+func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
+	/*
+		e, err := eventABI.Unpack("PostedFile", vLog.Data)
+		if err != nil {
+			log.Fatalf("Failed to unpack log data normally: %v", err)
+			return
+		}
+		fmt.Println(len(e))
+	*/
+
+	// can't if-elif-else or case-switch because we need logging
+	eventPostedFile := PostedFile{}
+	eventBoughtStorage := BoughtStorage{}
+
+	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
+		if errGenerate = generatePostedFileMsg(w, q, chainID, jackalContract, eventPostedFile); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into PostedFile: %v %v", errUnpack, errGenerate)
+
+	if errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, "BoughtStorage", vLog.Data); errUnpack == nil {
+		if errGenerate = generateBoughtStorageMsg(w, q, chainID, jackalContract, eventBoughtStorage); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into BuyStorage: %v  %v", errUnpack, errGenerate)
+
+	log.Fatalf("Failed to unpack log data into all event types: %v", errUnpack)
+	return
+
+execute:
 	msg := &wasm.MsgExecuteContract{
 		Sender:   w.AccAddress(),
 		Contract: jackalContract,
 		Msg:      factoryMsg.Encode(),
-		Funds:    sdk.NewCoins(c),
+		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ujkl", cost)),
 	}
 
 	log.Printf("execute msg: %v", msg)
@@ -177,6 +200,5 @@ func chainRep(id uint64) string {
 	if len(s) == 0 {
 		return fmt.Sprintf("%d", id)
 	}
-
 	return s
 }
