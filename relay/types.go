@@ -36,3 +36,9 @@ type BoughtStorage struct {
 	SizeBytes    uint64
 	Referral     string
 }
+
+type DeletedFile struct {
+	From   common.Address
+	Merkle string
+	Start  uint64
+}
