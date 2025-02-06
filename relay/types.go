@@ -22,7 +22,7 @@ var ChainIDS = map[uint64]string{
 }
 
 type PostedFile struct {
-	Sender  common.Address
+	From    common.Address
 	Merkle  string
 	Size    uint64
 	Note    string

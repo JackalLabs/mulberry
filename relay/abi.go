@@ -43,7 +43,7 @@ func init() {
 
 func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event PostedFile) (err error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress := event.Sender.String()
+	evmAddress := event.From.String()
 
 	merkleRoot, err := hex.DecodeString(event.Merkle)
 	if err != nil {
@@ -57,7 +57,7 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		return
 	}
 
-	log.Printf("Relaying for %s\n", event.Sender.String())
+	log.Printf("Relaying for %s\n", event.From.String())
 
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 	var maxProofs int64 = 3
