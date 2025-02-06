@@ -78,7 +78,10 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 	}
 
 	// calculate expires field (event.Expires is the number of days)
-	expires := abci.Response.LastBlockHeight + ((int64(event.Expires) * 24 * 60 * 60) / 6)
+	expires := int64(0)
+	if event.Expires != 0 {
+		expires = abci.Response.LastBlockHeight + ((int64(event.Expires) * 24 * 60 * 60) / 6)
+	}
 
 	storageMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
