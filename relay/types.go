@@ -36,3 +36,10 @@ type BoughtStorage struct {
 	SizeBytes    uint64
 	Referral     string
 }
+
+type RequestedReportForm struct {
+	From   common.Address
+	Prover string
+	Merkle string
+	Start  uint64
+}
