@@ -22,7 +22,6 @@ type ExecuteMsgPostFile struct {
 }
 
 type ExecuteMsgBuyStorage struct {
-	Creator      string `json:"creator,omitempty"`
 	ForAddress   string `json:"for_address,omitempty"`
 	DurationDays int64  `json:"duration_days,omitempty"`
 	Bytes        int64  `json:"bytes,omitempty"`
@@ -31,11 +30,10 @@ type ExecuteMsgBuyStorage struct {
 }
 
 type ExecuteMsgRequestReportForm struct {
-	Creator string `json:"creator,omitempty"`
-	Prover  string `json:"prover,omitempty"`
-	Merkle  string `json:"merkle,omitempty"`
-	Owner   string `json:"owner,omitempty"`
-	Start   int64  `json:"start,omitempty"`
+	Prover string `json:"prover,omitempty"`
+	Merkle string `json:"merkle,omitempty"`
+	Owner  string `json:"owner,omitempty"`
+	Start  int64  `json:"start,omitempty"`
 }
 
 // ToString returns a string representation of the message
