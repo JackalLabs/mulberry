@@ -31,19 +31,20 @@ var (
 	cost        int64
 	errUnpack   error
 	errGenerate error
+	errABI      error
 )
 
 func init() {
-	var err error
-	eventABI, err = abi.JSON(strings.NewReader(ABI))
-	if err != nil {
-		log.Fatalf("Failed to parse ABI: %v", err)
+	eventABI, errABI = abi.JSON(strings.NewReader(ABI))
+	if errABI != nil {
+		log.Fatalf("Failed to parse ABI: %v", errABI)
 	}
 }
 
 func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event PostedFile) (err error) {
 	log.Printf("Event details: %+v", event)
 	evmAddress := event.From.String()
+	log.Printf("Relaying for %s\n", event.From.String())
 
 	merkleRoot, err := hex.DecodeString(event.Merkle)
 	if err != nil {
@@ -56,8 +57,6 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		log.Printf("Failed to query ABCI: %v", err)
 		return
 	}
-
-	log.Printf("Relaying for %s\n", event.From.String())
 
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 	var maxProofs int64 = 3
@@ -198,15 +197,6 @@ func generateRequestedReportFormMsg(w *wallet.Wallet, q *uploader.Queue, chainID
 }
 
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
-	/*
-		e, err := eventABI.Unpack("PostedFile", vLog.Data)
-		if err != nil {
-			log.Fatalf("Failed to unpack log data normally: %v", err)
-			return
-		}
-		fmt.Println(len(e))
-	*/
-
 	// can't if-elif-else or case-switch because we need logging
 	eventPostedFile := PostedFile{}
 	eventBoughtStorage := BoughtStorage{}
@@ -241,8 +231,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	}
 	log.Printf("Failed to unpack log data into RequestReportForm: %v  %v", errUnpack, errGenerate)
 
-	log.Fatalf("Failed to unpack log data into all event types: %v", errUnpack)
-	return
+	log.Fatal("Failed to unpack log data into all event types")
 
 execute:
 	msg := &wasm.MsgExecuteContract{
@@ -253,7 +242,6 @@ execute:
 	}
 
 	log.Printf("execute msg: %v", msg)
-
 	if err := msg.ValidateBasic(); err != nil {
 		log.Fatalf("Failed to validate message: %v", err)
 		return
@@ -264,9 +252,8 @@ execute:
 		log.Fatalf("Failed to post message: %v", err)
 		return
 	}
-
 	if res == nil {
-		log.Fatalf("something went wrong, response is empty")
+		log.Fatalf("Response is empty")
 		return
 	}
 
