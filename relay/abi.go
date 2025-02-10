@@ -157,12 +157,27 @@ func generateRequestedReportFormMsg(event RequestedReportForm) (err error) {
 	return
 }
 
+func generatePostedKeyMsg(q *uploader.Queue, event PostedKey) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		PostKey: &evmTypes.ExecuteMsgPostKey{
+			Key: event.Key,
+		},
+	}
+
+	cost = int64(float64(q.GetCost(0, 0)) * 1.2) // minimum nonzero cost
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
-	// can't if-elif-else or case-switch because we need logging
+	// can't if-elif-else or case-switch because we need logging in between
 	eventPostedFile := PostedFile{}
 	eventBoughtStorage := BoughtStorage{}
 	eventDeletedFile := DeletedFile{}
 	eventRequestedReportForm := RequestedReportForm{}
+	eventPostedKey := PostedKey{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
 		if errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile); errGenerate == nil {
@@ -190,7 +205,14 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 			goto execute
 		}
 	}
-	log.Printf("Failed to unpack log data into RequestReportForm: %v  %v", errUnpack, errGenerate)
+	log.Printf("Failed to unpack log data into RequestedReportForm: %v  %v", errUnpack, errGenerate)
+
+	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, "PostedKey", vLog.Data); errUnpack == nil {
+		if errGenerate = generatePostedKeyMsg(q, eventPostedKey); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into PostedKey: %v  %v", errUnpack, errGenerate)
 
 	log.Fatal("Failed to unpack log data into all event types")
 

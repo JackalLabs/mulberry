@@ -50,3 +50,8 @@ type RequestedReportForm struct {
 	Owner  string
 	Start  uint64
 }
+
+type PostedKey struct {
+	From common.Address
+	Key  string
+}
