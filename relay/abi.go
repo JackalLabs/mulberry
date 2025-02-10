@@ -165,6 +165,38 @@ func generateDeletedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64,
 	return
 }
 
+func generateRequestedReportFormMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event RequestedReportForm) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress := event.From.String()
+	log.Printf("Relaying for %s\n", event.From.String())
+
+	merkleRoot, err := hex.DecodeString(event.Merkle)
+	if err != nil {
+		log.Printf("Failed to decode merkle: %v", err)
+		return
+	}
+	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
+
+	storageMsg := evmTypes.ExecuteMsg{
+		RequestReportForm: &evmTypes.ExecuteMsgRequestReportForm{
+			Prover: event.Prover,
+			Merkle: merkleBase64,
+			Owner:  "", // who is the owner?
+			Start:  int64(event.Start),
+		},
+	}
+
+	factoryMsg = evmTypes.ExecuteFactoryMsg{
+		CallBindings: &evmTypes.ExecuteMsgCallBindings{
+			EvmAddress: &evmAddress,
+			Msg:        &storageMsg,
+		},
+	}
+
+	cost = 0
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	/*
 		e, err := eventABI.Unpack("PostedFile", vLog.Data)
@@ -179,6 +211,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	eventPostedFile := PostedFile{}
 	eventBoughtStorage := BoughtStorage{}
 	eventDeletedFile := DeletedFile{}
+	eventRequestedReportForm := RequestedReportForm{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
 		if errGenerate = generatePostedFileMsg(w, q, chainID, jackalContract, eventPostedFile); errGenerate == nil {
@@ -200,6 +233,13 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		}
 	}
 	log.Printf("Failed to unpack log data into DeletedFile: %v  %v", errUnpack, errGenerate)
+  
+	if errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, "RequestedReportForm", vLog.Data); errUnpack == nil {
+		if errGenerate = generateRequestedReportFormMsg(w, q, chainID, jackalContract, eventRequestedReportForm); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into RequestReportForm: %v  %v", errUnpack, errGenerate)
 
 	log.Fatalf("Failed to unpack log data into all event types: %v", errUnpack)
 	return

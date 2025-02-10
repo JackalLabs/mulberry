@@ -42,3 +42,10 @@ type DeletedFile struct {
 	Merkle string
 	Start  uint64
 }
+
+type RequestedReportForm struct {
+	From   common.Address
+	Prover string
+	Merkle string
+	Start  uint64
+}

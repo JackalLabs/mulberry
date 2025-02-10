@@ -274,6 +274,67 @@
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "requestReportForm",
+    "inputs": [
+      {
+        "name": "prover",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "merkle",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "start",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "requestReportFormFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "prover",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "merkle",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "start",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
     "type": "event",
     "name": "BoughtStorage",
     "inputs": [
@@ -365,6 +426,43 @@
       },
       {
         "name": "expires",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RequestedReportForm",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "prover",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "merkle",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "start",
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
