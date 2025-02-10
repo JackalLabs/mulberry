@@ -99,6 +99,47 @@
   },
   {
     "type": "function",
+    "name": "deleteFile",
+    "inputs": [
+      {
+        "name": "merkle",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "start",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "deleteFileFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "merkle",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "start",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "getAllowance",
     "inputs": [
       {
@@ -332,10 +373,35 @@
   },
   {
     "type": "event",
+    "name": "DeletedFile",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "merkle",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "start",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "PostedFile",
     "inputs": [
       {
-        "name": "sender",
+        "name": "from",
         "type": "address",
         "indexed": false,
         "internalType": "address"

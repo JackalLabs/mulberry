@@ -4,6 +4,7 @@ type ExecuteMsg struct {
 	PostKey           *ExecuteMsgPostKey           `json:"post_key,omitempty"`
 	PostFile          *ExecuteMsgPostFile          `json:"post_file,omitempty"`
 	BuyStorage        *ExecuteMsgBuyStorage        `json:"buy_storage,omitempty"`
+  DeleteFile *ExecuteMsgDeleteFile `json:"delete_file,omitempty"`
 	RequestReportForm *ExecuteMsgRequestReportForm `json:"request_report_form,omitempty"`
 }
 
@@ -27,6 +28,11 @@ type ExecuteMsgBuyStorage struct {
 	Bytes        int64  `json:"bytes,omitempty"`
 	PaymentDenom string `json:"payment_denom,omitempty"`
 	Referral     string `json:"referral,omitempty"`
+}
+
+type ExecuteMsgDeleteFile struct {
+	Merkle string `json:"merkle,omitempty"`
+	Start  int64  `json:"start,omitempty"`
 }
 
 type ExecuteMsgRequestReportForm struct {
