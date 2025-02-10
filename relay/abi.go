@@ -181,7 +181,7 @@ func generateRequestedReportFormMsg(w *wallet.Wallet, q *uploader.Queue, chainID
 		RequestReportForm: &evmTypes.ExecuteMsgRequestReportForm{
 			Prover: event.Prover,
 			Merkle: merkleBase64,
-			Owner:  "", // who is the owner?
+			Owner:  event.Owner,
 			Start:  int64(event.Start),
 		},
 	}
@@ -233,7 +233,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		}
 	}
 	log.Printf("Failed to unpack log data into DeletedFile: %v  %v", errUnpack, errGenerate)
-  
+
 	if errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, "RequestedReportForm", vLog.Data); errUnpack == nil {
 		if errGenerate = generateRequestedReportFormMsg(w, q, chainID, jackalContract, eventRequestedReportForm); errGenerate == nil {
 			goto execute

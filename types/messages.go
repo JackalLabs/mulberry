@@ -4,7 +4,7 @@ type ExecuteMsg struct {
 	PostKey           *ExecuteMsgPostKey           `json:"post_key,omitempty"`
 	PostFile          *ExecuteMsgPostFile          `json:"post_file,omitempty"`
 	BuyStorage        *ExecuteMsgBuyStorage        `json:"buy_storage,omitempty"`
-  DeleteFile *ExecuteMsgDeleteFile `json:"delete_file,omitempty"`
+	DeleteFile        *ExecuteMsgDeleteFile        `json:"delete_file,omitempty"`
 	RequestReportForm *ExecuteMsgRequestReportForm `json:"request_report_form,omitempty"`
 }
 
