@@ -47,5 +47,6 @@ type RequestedReportForm struct {
 	From   common.Address
 	Prover string
 	Merkle string
+	Owner  string
 	Start  uint64
 }
