@@ -369,7 +369,7 @@
   },
   {
     "type": "event",
-    "name": "RequestedReportform",
+    "name": "RequestedReportForm",
     "inputs": [
       {
         "name": "from",

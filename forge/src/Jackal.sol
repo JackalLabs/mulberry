@@ -6,7 +6,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 abstract contract Jackal {
     event PostedFile(address sender, string merkle, uint64 size, string note, uint64 expires);
     event BoughtStorage(address from, string for_address, uint64 duration_days, uint64 size_bytes, string referral);
-    event RequestedReportform(address from, string prover, string merkle, string owner, uint64 start);
+    event RequestedReportForm(address from, string prover, string merkle, string owner, uint64 start);
 
     function getPrice() public view virtual returns (int256);
 
@@ -103,7 +103,7 @@ abstract contract Jackal {
         string memory owner,
         uint64 start
     ) public payable validAddress hasAllowance(from) {
-        emit RequestedReportform(from, prover, merkle, owner, start);
+        emit RequestedReportForm(from, prover, merkle, owner, start);
     }
 
     function requestReportForm(string memory prover, string memory merkle, string memory owner, uint64 start)
