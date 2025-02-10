@@ -26,12 +26,16 @@ var ABI string
 // from `forge inspect Jackal abi`
 
 var (
-	eventABI    abi.ABI
-	factoryMsg  evmTypes.ExecuteFactoryMsg
-	cost        int64
+	eventABI abi.ABI
+	errABI   error
+
+	evmAddress string
+	cost       int64
+	relayedMsg evmTypes.ExecuteMsg
+	factoryMsg evmTypes.ExecuteFactoryMsg
+
 	errUnpack   error
 	errGenerate error
-	errABI      error
 )
 
 func init() {
@@ -41,14 +45,12 @@ func init() {
 	}
 }
 
-func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event PostedFile) (err error) {
+func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, event PostedFile) (err error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress := event.From.String()
-	log.Printf("Relaying for %s\n", event.From.String())
+	evmAddress = event.From.String()
 
-	merkleRoot, err := hex.DecodeString(event.Merkle)
+	merkleBase64, err := merkleToString(event.Merkle)
 	if err != nil {
-		log.Printf("Failed to decode merkle: %v", err)
 		return
 	}
 
@@ -57,10 +59,6 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		log.Printf("Failed to query ABCI: %v", err)
 		return
 	}
-
-	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
-	var maxProofs int64 = 3
-	fileSize := int64(event.Size)
 
 	note := make(map[string]any)
 	err = json.Unmarshal([]byte(event.Note), &note)
@@ -82,7 +80,10 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		expires = abci.Response.LastBlockHeight + ((int64(event.Expires) * 24 * 60 * 60) / 6)
 	}
 
-	storageMsg := evmTypes.ExecuteMsg{
+	// fileSize and maxProofs (total storage used)
+	fileSize, maxProofs := int64(event.Size), int64(3)
+
+	relayedMsg = evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
 			Merkle:        merkleBase64,
 			FileSize:      fileSize,
@@ -94,24 +95,15 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		},
 	}
 
-	factoryMsg = evmTypes.ExecuteFactoryMsg{
-		CallBindings: &evmTypes.ExecuteMsgCallBindings{
-			EvmAddress: &evmAddress,
-			Msg:        &storageMsg,
-		},
-	}
-
-	cost = q.GetCost(fileSize*maxProofs, int64(event.Expires)*24)
-	cost = int64(float64(cost) * 1.2)
+	cost = int64(float64(q.GetCost(fileSize*maxProofs, int64(event.Expires)*24)) * 1.2)
 	return
 }
 
-func generateBoughtStorageMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event BoughtStorage) (err error) {
+func generateBoughtStorageMsg(q *uploader.Queue, event BoughtStorage) (err error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress := event.From.String()
-	log.Printf("Relaying for %s\n", event.From.String())
+	evmAddress = event.From.String()
 
-	storageMsg := evmTypes.ExecuteMsg{
+	relayedMsg = evmTypes.ExecuteMsg{
 		BuyStorage: &evmTypes.ExecuteMsgBuyStorage{
 			ForAddress:   event.ForAddress,
 			DurationDays: int64(event.DurationDays),
@@ -121,62 +113,40 @@ func generateBoughtStorageMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint6
 		},
 	}
 
-	factoryMsg = evmTypes.ExecuteFactoryMsg{
-		CallBindings: &evmTypes.ExecuteMsgCallBindings{
-			EvmAddress: &evmAddress,
-			Msg:        &storageMsg,
-		},
-	}
-
-	cost = q.GetCost(int64(event.SizeBytes), int64(event.DurationDays)*24) // double check cost calculation
-	cost = int64(float64(cost) * 1.2)
+	cost = int64(float64(q.GetCost(int64(event.SizeBytes), int64(event.DurationDays)*24)) * 1.2)
 	return
 }
 
-func generateDeletedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event DeletedFile) (err error) {
+func generateDeletedFileMsg(q *uploader.Queue, event DeletedFile) (err error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress := event.From.String()
-	log.Printf("Relaying for %s\n", event.From.String())
+	evmAddress = event.From.String()
 
-	merkleRoot, err := hex.DecodeString(event.Merkle)
+	merkleBase64, err := merkleToString(event.Merkle)
 	if err != nil {
-		log.Printf("Failed to decode merkle: %v", err)
 		return
 	}
-	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 
-	storageMsg := evmTypes.ExecuteMsg{
+	relayedMsg = evmTypes.ExecuteMsg{
 		DeleteFile: &evmTypes.ExecuteMsgDeleteFile{
 			Merkle: merkleBase64,
 			Start:  int64(event.Start),
 		},
 	}
 
-	factoryMsg = evmTypes.ExecuteFactoryMsg{
-		CallBindings: &evmTypes.ExecuteMsgCallBindings{
-			EvmAddress: &evmAddress,
-			Msg:        &storageMsg,
-		},
-	}
-
-	cost = q.GetCost(0, 0) // minimum nonzero cost
-	cost = int64(float64(cost) * 1.2)
+	cost = int64(float64(q.GetCost(0, 0)) * 1.2) // minimum nonzero cost
 	return
 }
 
-func generateRequestedReportFormMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event RequestedReportForm) (err error) {
+func generateRequestedReportFormMsg(event RequestedReportForm) (err error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress := event.From.String()
-	log.Printf("Relaying for %s\n", event.From.String())
+	evmAddress = event.From.String()
 
-	merkleRoot, err := hex.DecodeString(event.Merkle)
+	merkleBase64, err := merkleToString(event.Merkle)
 	if err != nil {
-		log.Printf("Failed to decode merkle: %v", err)
 		return
 	}
-	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 
-	storageMsg := evmTypes.ExecuteMsg{
+	relayedMsg = evmTypes.ExecuteMsg{
 		RequestReportForm: &evmTypes.ExecuteMsgRequestReportForm{
 			Prover: event.Prover,
 			Merkle: merkleBase64,
@@ -184,15 +154,6 @@ func generateRequestedReportFormMsg(w *wallet.Wallet, q *uploader.Queue, chainID
 			Start:  int64(event.Start),
 		},
 	}
-
-	factoryMsg = evmTypes.ExecuteFactoryMsg{
-		CallBindings: &evmTypes.ExecuteMsgCallBindings{
-			EvmAddress: &evmAddress,
-			Msg:        &storageMsg,
-		},
-	}
-
-	cost = 0
 	return
 }
 
@@ -204,28 +165,28 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	eventRequestedReportForm := RequestedReportForm{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
-		if errGenerate = generatePostedFileMsg(w, q, chainID, jackalContract, eventPostedFile); errGenerate == nil {
+		if errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile); errGenerate == nil {
 			goto execute
 		}
 	}
 	log.Printf("Failed to unpack log data into PostedFile: %v %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, "BoughtStorage", vLog.Data); errUnpack == nil {
-		if errGenerate = generateBoughtStorageMsg(w, q, chainID, jackalContract, eventBoughtStorage); errGenerate == nil {
+		if errGenerate = generateBoughtStorageMsg(q, eventBoughtStorage); errGenerate == nil {
 			goto execute
 		}
 	}
 	log.Printf("Failed to unpack log data into BoughtStorage: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, "DeletedFile", vLog.Data); errUnpack == nil {
-		if errGenerate = generateDeletedFileMsg(w, q, chainID, jackalContract, eventDeletedFile); errGenerate == nil {
+		if errGenerate = generateDeletedFileMsg(q, eventDeletedFile); errGenerate == nil {
 			goto execute
 		}
 	}
 	log.Printf("Failed to unpack log data into DeletedFile: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, "RequestedReportForm", vLog.Data); errUnpack == nil {
-		if errGenerate = generateRequestedReportFormMsg(w, q, chainID, jackalContract, eventRequestedReportForm); errGenerate == nil {
+		if errGenerate = generateRequestedReportFormMsg(eventRequestedReportForm); errGenerate == nil {
 			goto execute
 		}
 	}
@@ -234,6 +195,13 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	log.Fatal("Failed to unpack log data into all event types")
 
 execute:
+	factoryMsg = evmTypes.ExecuteFactoryMsg{
+		CallBindings: &evmTypes.ExecuteMsgCallBindings{
+			EvmAddress: &evmAddress,
+			Msg:        &relayedMsg,
+		},
+	}
+
 	msg := &wasm.MsgExecuteContract{
 		Sender:   w.AccAddress(),
 		Contract: jackalContract,
@@ -267,4 +235,13 @@ func chainRep(id uint64) string {
 		return fmt.Sprintf("%d", id)
 	}
 	return s
+}
+
+func merkleToString(merkle string) (string, error) {
+	merkleRoot, err := hex.DecodeString(merkle)
+	if err != nil {
+		log.Printf("Failed to decode merkle: %v", err)
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(merkleRoot), nil
 }
