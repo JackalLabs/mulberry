@@ -109,6 +109,7 @@ abstract contract Jackal {
 
     function deleteFile(string memory merkle, uint64 start) public payable {
         deleteFileFrom(msg.sender, merkle, start);
+    }
 
     function requestReportFormFrom(
         address from,
