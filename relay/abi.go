@@ -43,7 +43,7 @@ func init() {
 
 func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event PostedFile) (err error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress := event.Sender.String()
+	evmAddress := event.From.String()
 
 	merkleRoot, err := hex.DecodeString(event.Merkle)
 	if err != nil {
@@ -57,7 +57,7 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		return
 	}
 
-	log.Printf("Relaying for %s\n", event.Sender.String())
+	log.Printf("Relaying for %s\n", event.From.String())
 
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 	var maxProofs int64 = 3
@@ -134,6 +134,37 @@ func generateBoughtStorageMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint6
 	return
 }
 
+func generateDeletedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string, event DeletedFile) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress := event.From.String()
+	log.Printf("Relaying for %s\n", event.From.String())
+
+	merkleRoot, err := hex.DecodeString(event.Merkle)
+	if err != nil {
+		log.Printf("Failed to decode merkle: %v", err)
+		return
+	}
+	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
+
+	storageMsg := evmTypes.ExecuteMsg{
+		DeleteFile: &evmTypes.ExecuteMsgDeleteFile{
+			Merkle: merkleBase64,
+			Start:  int64(event.Start),
+		},
+	}
+
+	factoryMsg = evmTypes.ExecuteFactoryMsg{
+		CallBindings: &evmTypes.ExecuteMsgCallBindings{
+			EvmAddress: &evmAddress,
+			Msg:        &storageMsg,
+		},
+	}
+
+	cost = q.GetCost(0, 0) // minimum nonzero cost
+	cost = int64(float64(cost) * 1.2)
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	/*
 		e, err := eventABI.Unpack("PostedFile", vLog.Data)
@@ -147,6 +178,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	// can't if-elif-else or case-switch because we need logging
 	eventPostedFile := PostedFile{}
 	eventBoughtStorage := BoughtStorage{}
+	eventDeletedFile := DeletedFile{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
 		if errGenerate = generatePostedFileMsg(w, q, chainID, jackalContract, eventPostedFile); errGenerate == nil {
@@ -160,7 +192,14 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 			goto execute
 		}
 	}
-	log.Printf("Failed to unpack log data into BuyStorage: %v  %v", errUnpack, errGenerate)
+	log.Printf("Failed to unpack log data into BoughtStorage: %v  %v", errUnpack, errGenerate)
+
+	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, "DeletedFile", vLog.Data); errUnpack == nil {
+		if errGenerate = generateDeletedFileMsg(w, q, chainID, jackalContract, eventDeletedFile); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into DeletedFile: %v  %v", errUnpack, errGenerate)
 
 	log.Fatalf("Failed to unpack log data into all event types: %v", errUnpack)
 	return
