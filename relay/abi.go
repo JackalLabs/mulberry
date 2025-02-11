@@ -2,6 +2,7 @@ package relay
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -171,12 +172,32 @@ func generatePostedKeyMsg(q *uploader.Queue, event PostedKey) (err error) {
 	return
 }
 
+func generateDeletedFileTreeMsg(q *uploader.Queue, event DeletedFileTree) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	h := sha256.New()
+	h.Write([]byte(event.Account))
+	accountHash := h.Sum(nil)
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		DeleteFileTree: &evmTypes.ExecuteMsgDeleteFileTree{
+			HashPath: MerklePath(event.HashPath),
+			Account:  fmt.Sprintf("%x", accountHash),
+		},
+	}
+
+	cost = int64(float64(q.GetCost(0, 0)) * 1.2) // minimum nonzero cost
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// can't if-elif-else or case-switch because we need logging in between
 	eventPostedFile := PostedFile{}
 	eventBoughtStorage := BoughtStorage{}
 	eventDeletedFile := DeletedFile{}
 	eventRequestedReportForm := RequestedReportForm{}
+	eventDeletedFileTree := DeletedFileTree{}
 	eventPostedKey := PostedKey{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
@@ -206,6 +227,13 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		}
 	}
 	log.Printf("Failed to unpack log data into RequestedReportForm: %v  %v", errUnpack, errGenerate)
+
+	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, "DeletedFileTree", vLog.Data); errUnpack == nil {
+		if errGenerate = generateDeletedFileTreeMsg(q, eventDeletedFileTree); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into DeletedFileTree: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, "PostedKey", vLog.Data); errUnpack == nil {
 		if errGenerate = generatePostedKeyMsg(q, eventPostedKey); errGenerate == nil {
@@ -266,4 +294,21 @@ func merkleToString(merkle string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(merkleRoot), nil
+}
+
+func MerklePath(path string) (total string) { // ex: hello/world/path -> ["hello", "world", "path"] -> 3867baa2724c672442e4ba21b6fa532a6380d06a2f8779f11d626bd840d1cdee
+	trimPath := strings.TrimSuffix(path, "/")
+	chunks := strings.Split(trimPath, "/")
+
+	for _, chunk := range chunks {
+		h := sha256.New()
+		h.Write([]byte(chunk))
+		b := fmt.Sprintf("%x", h.Sum(nil))
+		k := fmt.Sprintf("%s%s", total, b)
+
+		h1 := sha256.New()
+		h1.Write([]byte(k))
+		total = fmt.Sprintf("%x", h1.Sum(nil))
+	}
+	return
 }
