@@ -134,7 +134,7 @@ func generateDeletedFileMsg(q *uploader.Queue, event DeletedFile) (err error) {
 		},
 	}
 
-	cost = int64(float64(q.GetCost(0, 0)) * 1.2) // minimum nonzero cost
+	// cost = int64(float64(q.GetCost(0, 0)) * 1.2)
 	return
 }
 
@@ -168,7 +168,7 @@ func generatePostedKeyMsg(q *uploader.Queue, event PostedKey) (err error) {
 		},
 	}
 
-	cost = int64(float64(q.GetCost(0, 0)) * 1.2) // minimum nonzero cost
+	// cost = int64(float64(q.GetCost(0, 0)) * 1.2)
 	return
 }
 
@@ -187,7 +187,7 @@ func generateDeletedFileTreeMsg(q *uploader.Queue, event DeletedFileTree) (err e
 		},
 	}
 
-	cost = int64(float64(q.GetCost(0, 0)) * 1.2) // minimum nonzero cost
+	// cost = int64(float64(q.GetCost(0, 0)) * 1.2)
 	return
 }
 
