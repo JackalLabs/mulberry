@@ -154,7 +154,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "payable"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -177,7 +177,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "payable"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -325,6 +325,57 @@
       },
       {
         "name": "key",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "provisionFileTree",
+    "inputs": [
+      {
+        "name": "editors",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "viewers",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "tracking_number",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "provisionFileTreeFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "editors",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "viewers",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "tracking_number",
         "type": "string",
         "internalType": "string"
       }
@@ -542,6 +593,37 @@
       },
       {
         "name": "key",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ProvisionedFileTree",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "editors",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "viewers",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "tracking_number",
         "type": "string",
         "indexed": false,
         "internalType": "string"
