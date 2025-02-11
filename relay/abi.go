@@ -118,7 +118,7 @@ func generateBoughtStorageMsg(q *uploader.Queue, event BoughtStorage) (err error
 	return
 }
 
-func generateDeletedFileMsg(q *uploader.Queue, event DeletedFile) (err error) {
+func generateDeletedFileMsg(event DeletedFile) (err error) {
 	log.Printf("Event details: %+v", event)
 	evmAddress = event.From.String()
 
@@ -158,7 +158,7 @@ func generateRequestedReportFormMsg(event RequestedReportForm) (err error) {
 	return
 }
 
-func generatePostedKeyMsg(q *uploader.Queue, event PostedKey) (err error) {
+func generatePostedKeyMsg(event PostedKey) (err error) {
 	log.Printf("Event details: %+v", event)
 	evmAddress = event.From.String()
 
@@ -172,7 +172,7 @@ func generatePostedKeyMsg(q *uploader.Queue, event PostedKey) (err error) {
 	return
 }
 
-func generateDeletedFileTreeMsg(q *uploader.Queue, event DeletedFileTree) (err error) {
+func generateDeletedFileTreeMsg(event DeletedFileTree) (err error) {
 	log.Printf("Event details: %+v", event)
 	evmAddress = event.From.String()
 
@@ -191,6 +191,20 @@ func generateDeletedFileTreeMsg(q *uploader.Queue, event DeletedFileTree) (err e
 	return
 }
 
+func generateProvisionedFiletreeMsg(event ProvisionedFileTree) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		ProvisionFileTree: &evmTypes.ExecuteMsgProvisionFileTree{
+			Editors:        event.Editors,
+			Viewers:        event.Viewers,
+			TrackingNumber: event.TrackingNumber,
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// can't if-elif-else or case-switch because we need logging in between
 	eventPostedFile := PostedFile{}
@@ -199,6 +213,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	eventRequestedReportForm := RequestedReportForm{}
 	eventDeletedFileTree := DeletedFileTree{}
 	eventPostedKey := PostedKey{}
+	eventProvisionedFileTree := ProvisionedFileTree{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
 		if errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile); errGenerate == nil {
@@ -215,7 +230,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	log.Printf("Failed to unpack log data into BoughtStorage: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, "DeletedFile", vLog.Data); errUnpack == nil {
-		if errGenerate = generateDeletedFileMsg(q, eventDeletedFile); errGenerate == nil {
+		if errGenerate = generateDeletedFileMsg(eventDeletedFile); errGenerate == nil {
 			goto execute
 		}
 	}
@@ -228,15 +243,22 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	}
 	log.Printf("Failed to unpack log data into RequestedReportForm: %v  %v", errUnpack, errGenerate)
 
+	if errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, "ProvisionedFileTree", vLog.Data); errUnpack == nil {
+		if errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into ProvisionedFileTree: %v  %v", errUnpack, errGenerate)
+
 	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, "DeletedFileTree", vLog.Data); errUnpack == nil {
-		if errGenerate = generateDeletedFileTreeMsg(q, eventDeletedFileTree); errGenerate == nil {
+		if errGenerate = generateDeletedFileTreeMsg(eventDeletedFileTree); errGenerate == nil {
 			goto execute
 		}
 	}
 	log.Printf("Failed to unpack log data into DeletedFileTree: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, "PostedKey", vLog.Data); errUnpack == nil {
-		if errGenerate = generatePostedKeyMsg(q, eventPostedKey); errGenerate == nil {
+		if errGenerate = generatePostedKeyMsg(eventPostedKey); errGenerate == nil {
 			goto execute
 		}
 	}
