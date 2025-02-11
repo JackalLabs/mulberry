@@ -61,3 +61,10 @@ type DeletedFileTree struct {
 	HashPath string
 	Account  string
 }
+
+type ProvisionedFileTree struct {
+	From           common.Address
+	Editors        string
+	Viewers        string
+	TrackingNumber string
+}
