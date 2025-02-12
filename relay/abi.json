@@ -303,6 +303,97 @@
   },
   {
     "type": "function",
+    "name": "postFileTree",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "hash_parent",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "hash_child",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "contents",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "viewers",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "editors",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "tracking_number",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "postFileTreeFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "account",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "hash_parent",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "hash_child",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "contents",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "viewers",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "editors",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "tracking_number",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "postKey",
     "inputs": [
       {
@@ -577,6 +668,61 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PostedFileTree",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "account",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "hash_parent",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "hash_child",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "contents",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "viewers",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "editors",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "tracking_number",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false
