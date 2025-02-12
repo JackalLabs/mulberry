@@ -8,6 +8,7 @@ abstract contract Jackal {
     event BoughtStorage(address from, string for_address, uint64 duration_days, uint64 size_bytes, string referral);
     event DeletedFile(address from, string merkle, uint64 start);
     event RequestedReportForm(address from, string prover, string merkle, string owner, uint64 start);
+    event PostedKey(address from, string key);
 
     function getPrice() public view virtual returns (int256);
 
@@ -97,17 +98,12 @@ abstract contract Jackal {
         buyStorageFrom(msg.sender, for_address, duration_days, size_bytes, referral);
     }
 
-    function deleteFileFrom(address from, string memory merkle, uint64 start)
-        public
-        payable
-        validAddress
-        hasAllowance(from)
-    {
+    function deleteFileFrom(address from, string memory merkle, uint64 start) public validAddress hasAllowance(from) {
         // is file deletion free?
         emit DeletedFile(from, merkle, start);
     }
 
-    function deleteFile(string memory merkle, uint64 start) public payable {
+    function deleteFile(string memory merkle, uint64 start) public {
         deleteFileFrom(msg.sender, merkle, start);
     }
 
@@ -117,14 +113,19 @@ abstract contract Jackal {
         string memory merkle,
         string memory owner,
         uint64 start
-    ) public payable validAddress hasAllowance(from) {
+    ) public validAddress hasAllowance(from) {
         emit RequestedReportForm(from, prover, merkle, owner, start);
     }
 
-    function requestReportForm(string memory prover, string memory merkle, string memory owner, uint64 start)
-        public
-        payable
-    {
+    function requestReportForm(string memory prover, string memory merkle, string memory owner, uint64 start) public {
         requestReportFormFrom(msg.sender, prover, merkle, owner, start);
+    }
+
+    function postKeyFrom(address from, string memory key) public validAddress hasAllowance(from) {
+        emit PostedKey(from, key);
+    }
+
+    function postKey(string memory key) public {
+        postKeyFrom(msg.sender, key);
     }
 }
