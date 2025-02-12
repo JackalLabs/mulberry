@@ -2,7 +2,6 @@ package relay
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -176,14 +175,10 @@ func generateDeletedFileTreeMsg(q *uploader.Queue, event DeletedFileTree) (err e
 	log.Printf("Event details: %+v", event)
 	evmAddress = event.From.String()
 
-	h := sha256.New()
-	h.Write([]byte(event.Account))
-	accountHash := h.Sum(nil)
-
 	relayedMsg = evmTypes.ExecuteMsg{
 		DeleteFileTree: &evmTypes.ExecuteMsgDeleteFileTree{
-			HashPath: MerklePath(event.HashPath),
-			Account:  fmt.Sprintf("%x", accountHash),
+			HashPath: event.HashPath,
+			Account:  event.Account,
 		},
 	}
 
@@ -294,21 +289,4 @@ func merkleToString(merkle string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(merkleRoot), nil
-}
-
-func MerklePath(path string) (total string) { // ex: hello/world/path -> ["hello", "world", "path"] -> 3867baa2724c672442e4ba21b6fa532a6380d06a2f8779f11d626bd840d1cdee
-	trimPath := strings.TrimSuffix(path, "/")
-	chunks := strings.Split(trimPath, "/")
-
-	for _, chunk := range chunks {
-		h := sha256.New()
-		h.Write([]byte(chunk))
-		b := fmt.Sprintf("%x", h.Sum(nil))
-		k := fmt.Sprintf("%s%s", total, b)
-
-		h1 := sha256.New()
-		h1.Write([]byte(k))
-		total = fmt.Sprintf("%x", h1.Sum(nil))
-	}
-	return
 }
