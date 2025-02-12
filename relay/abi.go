@@ -132,8 +132,6 @@ func generateDeletedFileMsg(event DeletedFile) (err error) {
 			Start:  int64(event.Start),
 		},
 	}
-
-	// cost = int64(float64(q.GetCost(0, 0)) * 1.2)
 	return
 }
 
@@ -166,8 +164,6 @@ func generatePostedKeyMsg(event PostedKey) (err error) {
 			Key: event.Key,
 		},
 	}
-
-	// cost = int64(float64(q.GetCost(0, 0)) * 1.2)
 	return
 }
 
@@ -181,8 +177,6 @@ func generateDeletedFileTreeMsg(event DeletedFileTree) (err error) {
 			Account:  event.Account,
 		},
 	}
-
-	// cost = int64(float64(q.GetCost(0, 0)) * 1.2)
 	return
 }
 
@@ -200,8 +194,27 @@ func generateProvisionedFiletreeMsg(event ProvisionedFileTree) (err error) {
 	return
 }
 
+func generatePostedFileTreeMsg(event PostedFileTree) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		PostFileTree: &evmTypes.ExecuteMsgPostFileTree{
+			Account:        event.Account,
+			HashParent:     event.HashParent,
+			HashChild:      event.HashChild,
+			Contents:       event.Contents,
+			Viewers:        event.Viewers,
+			Editors:        event.Editors,
+			TrackingNumber: event.TrackingNumber,
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// can't if-elif-else or case-switch because we need logging in between
+	// the order here matters, otherwise some events are unpacked incorrectly
 	eventPostedFile := PostedFile{}
 	eventBoughtStorage := BoughtStorage{}
 	eventDeletedFile := DeletedFile{}
@@ -209,6 +222,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	eventDeletedFileTree := DeletedFileTree{}
 	eventPostedKey := PostedKey{}
 	eventProvisionedFileTree := ProvisionedFileTree{}
+	eventPostedFileTree := PostedFileTree{}
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
 		if errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile); errGenerate == nil {
@@ -237,6 +251,13 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		}
 	}
 	log.Printf("Failed to unpack log data into RequestedReportForm: %v  %v", errUnpack, errGenerate)
+
+	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, "PostedFileTree", vLog.Data); errUnpack == nil {
+		if errGenerate = generatePostedFileTreeMsg(eventPostedFileTree); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into PostedFileTree: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, "ProvisionedFileTree", vLog.Data); errUnpack == nil {
 		if errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree); errGenerate == nil {

@@ -8,6 +8,7 @@ type ExecuteMsg struct {
 	RequestReportForm *ExecuteMsgRequestReportForm `json:"request_report_form,omitempty"`
 	DeleteFileTree    *ExecuteMsgDeleteFileTree    `json:"delete_file_tree,omitempty"`
 	ProvisionFileTree *ExecuteMsgProvisionFileTree `json:"provision_file_tree,omitempty"`
+	PostFileTree      *ExecuteMsgPostFileTree      `json:"post_file_tree,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -52,6 +53,16 @@ type ExecuteMsgDeleteFileTree struct {
 type ExecuteMsgProvisionFileTree struct {
 	Editors        string `json:"editors,omitempty"`
 	Viewers        string `json:"viewers,omitempty"`
+	TrackingNumber string `json:"tracking_number,omitempty"`
+}
+
+type ExecuteMsgPostFileTree struct {
+	Account        string `json:"account,omitempty"`
+	HashParent     string `json:"hash_parent,omitempty"`
+	HashChild      string `json:"hash_child,omitempty"`
+	Contents       string `json:"contents,omitempty"`
+	Viewers        string `json:"viewers,omitempty"`
+	Editors        string `json:"editors,omitempty"`
 	TrackingNumber string `json:"tracking_number,omitempty"`
 }
 

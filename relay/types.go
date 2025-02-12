@@ -68,3 +68,14 @@ type ProvisionedFileTree struct {
 	Viewers        string
 	TrackingNumber string
 }
+
+type PostedFileTree struct {
+	From           common.Address
+	Account        string
+	HashParent     string
+	HashChild      string
+	Contents       string
+	Viewers        string
+	Editors        string
+	TrackingNumber string
+}
