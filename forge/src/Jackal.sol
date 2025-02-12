@@ -9,6 +9,7 @@ abstract contract Jackal {
     event DeletedFile(address from, string merkle, uint64 start);
     event RequestedReportForm(address from, string prover, string merkle, string owner, uint64 start);
     event PostedKey(address from, string key);
+    event DeletedFileTree(address from, string hash_path, string account);
 
     function getPrice() public view virtual returns (int256);
 
@@ -99,8 +100,7 @@ abstract contract Jackal {
     }
 
     function deleteFileFrom(address from, string memory merkle, uint64 start) public validAddress hasAllowance(from) {
-        // is file deletion free?
-        emit DeletedFile(from, merkle, start);
+        emit DeletedFile(from, merkle, start); // file deletion is free
     }
 
     function deleteFile(string memory merkle, uint64 start) public {
@@ -127,5 +127,17 @@ abstract contract Jackal {
 
     function postKey(string memory key) public {
         postKeyFrom(msg.sender, key);
+    }
+
+    function deleteFileTreeFrom(address from, string memory hash_path, string memory account)
+        public
+        validAddress
+        hasAllowance(from)
+    {
+        emit DeletedFileTree(from, hash_path, account);
+    }
+
+    function deleteFileTree(string memory hash_path, string memory account) public {
+        deleteFileTreeFrom(msg.sender, hash_path, account);
     }
 }

@@ -6,6 +6,7 @@ type ExecuteMsg struct {
 	BuyStorage        *ExecuteMsgBuyStorage        `json:"buy_storage,omitempty"`
 	DeleteFile        *ExecuteMsgDeleteFile        `json:"delete_file,omitempty"`
 	RequestReportForm *ExecuteMsgRequestReportForm `json:"request_report_form,omitempty"`
+	DeleteFileTree    *ExecuteMsgDeleteFileTree    `json:"delete_file_tree,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -40,6 +41,11 @@ type ExecuteMsgRequestReportForm struct {
 	Merkle string `json:"merkle,omitempty"`
 	Owner  string `json:"owner,omitempty"`
 	Start  int64  `json:"start,omitempty"`
+}
+
+type ExecuteMsgDeleteFileTree struct {
+	HashPath string `json:"hash_path,omitempty"`
+	Account  string `json:"account,omitempty"`
 }
 
 // ToString returns a string representation of the message

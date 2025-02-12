@@ -55,3 +55,9 @@ type PostedKey struct {
 	From common.Address
 	Key  string
 }
+
+type DeletedFileTree struct {
+	From     common.Address
+	HashPath string
+	Account  string
+}
