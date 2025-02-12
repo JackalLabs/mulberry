@@ -26,44 +26,44 @@ type ExecuteMsgPostFile struct {
 }
 
 type ExecuteMsgBuyStorage struct {
-	ForAddress   string `json:"for_address,omitempty"`
-	DurationDays int64  `json:"duration_days,omitempty"`
-	Bytes        int64  `json:"bytes,omitempty"`
-	PaymentDenom string `json:"payment_denom,omitempty"`
-	Referral     string `json:"referral,omitempty"`
+	ForAddress   string `json:"for_address"`
+	DurationDays int64  `json:"duration_days"`
+	Bytes        int64  `json:"bytes"`
+	PaymentDenom string `json:"payment_denom"`
+	Referral     string `json:"referral"`
 }
 
 type ExecuteMsgDeleteFile struct {
-	Merkle string `json:"merkle,omitempty"`
-	Start  int64  `json:"start,omitempty"`
+	Merkle string `json:"merkle"`
+	Start  int64  `json:"start"`
 }
 
 type ExecuteMsgRequestReportForm struct {
-	Prover string `json:"prover,omitempty"`
-	Merkle string `json:"merkle,omitempty"`
-	Owner  string `json:"owner,omitempty"`
-	Start  int64  `json:"start,omitempty"`
+	Prover string `json:"prover"`
+	Merkle string `json:"merkle"`
+	Owner  string `json:"owner"`
+	Start  int64  `json:"start"`
 }
 
 type ExecuteMsgDeleteFileTree struct {
-	HashPath string `json:"hash_path,omitempty"`
-	Account  string `json:"account,omitempty"`
+	HashPath string `json:"hash_path"`
+	Account  string `json:"account"`
 }
 
 type ExecuteMsgProvisionFileTree struct {
-	Editors        string `json:"editors,omitempty"`
-	Viewers        string `json:"viewers,omitempty"`
-	TrackingNumber string `json:"tracking_number,omitempty"`
+	Editors        string `json:"editors"`
+	Viewers        string `json:"viewers"`
+	TrackingNumber string `json:"tracking_number"`
 }
 
 type ExecuteMsgPostFileTree struct {
-	Account        string `json:"account,omitempty"`
-	HashParent     string `json:"hash_parent,omitempty"`
-	HashChild      string `json:"hash_child,omitempty"`
-	Contents       string `json:"contents,omitempty"`
-	Viewers        string `json:"viewers,omitempty"`
-	Editors        string `json:"editors,omitempty"`
-	TrackingNumber string `json:"tracking_number,omitempty"`
+	Account        string `json:"account"`
+	HashParent     string `json:"hash_parent"`
+	HashChild      string `json:"hash_child"`
+	Contents       string `json:"contents"`
+	Viewers        string `json:"viewers"`
+	Editors        string `json:"editors"`
+	TrackingNumber string `json:"tracking_number"`
 }
 
 // ToString returns a string representation of the message

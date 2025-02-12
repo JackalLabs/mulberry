@@ -231,6 +231,13 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 	}
 	log.Printf("Failed to unpack log data into PostedFile: %v %v", errUnpack, errGenerate)
 
+	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, "PostedFileTree", vLog.Data); errUnpack == nil {
+		if errGenerate = generatePostedFileTreeMsg(eventPostedFileTree); errGenerate == nil {
+			goto execute
+		}
+	}
+	log.Printf("Failed to unpack log data into PostedFileTree: %v  %v", errUnpack, errGenerate)
+
 	if errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, "BoughtStorage", vLog.Data); errUnpack == nil {
 		if errGenerate = generateBoughtStorageMsg(q, eventBoughtStorage); errGenerate == nil {
 			goto execute
@@ -251,13 +258,6 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		}
 	}
 	log.Printf("Failed to unpack log data into RequestedReportForm: %v  %v", errUnpack, errGenerate)
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, "PostedFileTree", vLog.Data); errUnpack == nil {
-		if errGenerate = generatePostedFileTreeMsg(eventPostedFileTree); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into PostedFileTree: %v  %v", errUnpack, errGenerate)
 
 	if errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, "ProvisionedFileTree", vLog.Data); errUnpack == nil {
 		if errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree); errGenerate == nil {
@@ -309,7 +309,7 @@ execute:
 		return
 	}
 	if res == nil {
-		log.Fatalf("Response is empty")
+		log.Printf("Response is empty")
 		return
 	}
 
