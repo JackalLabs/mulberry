@@ -79,3 +79,24 @@ type PostedFileTree struct {
 	Editors        string
 	TrackingNumber string
 }
+
+type AddedViewers struct {
+	From       common.Address
+	ViewerIds  string
+	ViewerKeys string
+	ForAddress string
+	FileOwner  string
+}
+
+type RemovedViewers struct {
+	From       common.Address
+	ViewerIds  string
+	ForAddress string
+	FileOwner  string
+}
+
+type ResetViewers struct {
+	From       common.Address
+	ForAddress string
+	FileOwner  string
+}

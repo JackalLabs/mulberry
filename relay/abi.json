@@ -14,6 +14,67 @@
   },
   {
     "type": "function",
+    "name": "addViewers",
+    "inputs": [
+      {
+        "name": "viewer_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "viewer_keys",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "addViewersFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "viewer_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "viewer_keys",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "allowances",
     "inputs": [
       {
@@ -489,6 +550,57 @@
   },
   {
     "type": "function",
+    "name": "removeViewers",
+    "inputs": [
+      {
+        "name": "viewer_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "removeViewersFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "viewer_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "requestReportForm",
     "inputs": [
       {
@@ -547,6 +659,84 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "resetViewers",
+    "inputs": [
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "resetViewersFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AddedViewers",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "viewer_ids",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "viewer_keys",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -779,6 +969,37 @@
   },
   {
     "type": "event",
+    "name": "RemovedViewers",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "viewer_ids",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "RequestedReportForm",
     "inputs": [
       {
@@ -810,6 +1031,31 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ResetViewers",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false

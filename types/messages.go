@@ -9,6 +9,9 @@ type ExecuteMsg struct {
 	DeleteFileTree    *ExecuteMsgDeleteFileTree    `json:"delete_file_tree,omitempty"`
 	ProvisionFileTree *ExecuteMsgProvisionFileTree `json:"provision_file_tree,omitempty"`
 	PostFileTree      *ExecuteMsgPostFileTree      `json:"post_file_tree,omitempty"`
+	AddViewers        *ExecuteMsgAddViewers        `json:"add_viewers,omitempty"`
+	RemoveViewers     *ExecuteMsgRemoveViewers     `json:"remove_viewers,omitempty"`
+	ResetViewers      *ExecuteMsgResetViewers      `json:"reset_viewers,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -64,6 +67,24 @@ type ExecuteMsgPostFileTree struct {
 	Viewers        string `json:"viewers"`
 	Editors        string `json:"editors"`
 	TrackingNumber string `json:"tracking_number"`
+}
+
+type ExecuteMsgAddViewers struct {
+	ViewerIds  string `json:"viewer_ids"`
+	ViewerKeys string `json:"viewer_keys"`
+	Address    string `json:"address"`
+	FileOwner  string `json:"file_owner"`
+}
+
+type ExecuteMsgRemoveViewers struct {
+	ViewerIds string `json:"viewer_ids"`
+	Address   string `json:"address"`
+	FileOwner string `json:"file_owner"`
+}
+
+type ExecuteMsgResetViewers struct {
+	Address   string `json:"address"`
+	FileOwner string `json:"file_owner"`
 }
 
 // ToString returns a string representation of the message

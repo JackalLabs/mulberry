@@ -18,6 +18,7 @@ import (
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 //go:embed abi.json
@@ -212,77 +213,104 @@ func generatePostedFileTreeMsg(event PostedFileTree) (err error) {
 	return
 }
 
+func generateAddedViewersMsg(event AddedViewers) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		AddViewers: &evmTypes.ExecuteMsgAddViewers{
+			ViewerIds:  event.ViewerIds,
+			ViewerKeys: event.ViewerKeys,
+			Address:    event.ForAddress,
+			FileOwner:  event.FileOwner,
+		},
+	}
+	return
+}
+
+func generateRemovedViewersMsg(event RemovedViewers) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		RemoveViewers: &evmTypes.ExecuteMsgRemoveViewers{
+			ViewerIds: event.ViewerIds,
+			Address:   event.ForAddress,
+			FileOwner: event.FileOwner,
+		},
+	}
+	return
+}
+
+func generateResetViewersMsg(event ResetViewers) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		ResetViewers: &evmTypes.ExecuteMsgResetViewers{
+			Address:   event.ForAddress,
+			FileOwner: event.FileOwner,
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
-	// can't if-elif-else or case-switch because we need logging in between
-	// the order here matters, otherwise some events are unpacked incorrectly
-	eventPostedFile := PostedFile{}
-	eventBoughtStorage := BoughtStorage{}
-	eventDeletedFile := DeletedFile{}
-	eventRequestedReportForm := RequestedReportForm{}
-	eventDeletedFileTree := DeletedFileTree{}
-	eventPostedKey := PostedKey{}
-	eventProvisionedFileTree := ProvisionedFileTree{}
-	eventPostedFileTree := PostedFileTree{}
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data); errUnpack == nil {
-		if errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile); errGenerate == nil {
-			goto execute
-		}
+	// https://goethereumbook.org/event-read/#topics
+	eventSig := vLog.Topics[0].Hex()
+	switch eventSig {
+	case expectedSig("PostedFile(address,string,uint64,string,uint64)"):
+		eventPostedFile := PostedFile{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data)
+		errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile)
+	case expectedSig("BoughtStorage(address,string,uint64,uint64,string)"):
+		eventBoughtStorage := BoughtStorage{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, "BoughtStorage", vLog.Data)
+		errGenerate = generateBoughtStorageMsg(q, eventBoughtStorage)
+	case expectedSig("DeletedFile(address,string,uint64)"):
+		eventDeletedFile := DeletedFile{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, "DeletedFile", vLog.Data)
+		errGenerate = generateDeletedFileMsg(eventDeletedFile)
+	case expectedSig("RequestedReportForm(address,string,string,string,uint64)"):
+		eventRequestedReportForm := RequestedReportForm{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, "RequestedReportForm", vLog.Data)
+		errGenerate = generateRequestedReportFormMsg(eventRequestedReportForm)
+	case expectedSig("PostedKey(address,string)"):
+		eventPostedKey := PostedKey{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, "PostedKey", vLog.Data)
+		errGenerate = generatePostedKeyMsg(eventPostedKey)
+	case expectedSig("DeletedFileTree(address,string,string)"):
+		eventDeletedFileTree := DeletedFileTree{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, "DeletedFileTree", vLog.Data)
+		errGenerate = generateDeletedFileTreeMsg(eventDeletedFileTree)
+	case expectedSig("ProvisionedFileTree(address,string,string,string)"):
+		eventProvisionedFileTree := ProvisionedFileTree{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, "ProvisionedFileTree", vLog.Data)
+		errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree)
+	case expectedSig("PostedFileTree(address,string,string,string,string,string,string,string)"):
+		eventPostedFileTree := PostedFileTree{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, "PostedFileTree", vLog.Data)
+		errGenerate = generatePostedFileTreeMsg(eventPostedFileTree)
+	case expectedSig("AddedViewers(address,string,string,string,string)"):
+		eventAddedViewers := AddedViewers{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventAddedViewers, "AddedViewers", vLog.Data)
+		errGenerate = generateAddedViewersMsg(eventAddedViewers)
+	case expectedSig("RemovedViewers(address,string,string,string)"):
+		eventRemovedViewers := RemovedViewers{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedViewers, "RemovedViewers", vLog.Data)
+		errGenerate = generateRemovedViewersMsg(eventRemovedViewers)
+	case expectedSig("ResetViewers(address,string,string)"):
+		eventResetViewers := ResetViewers{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventResetViewers, "ResetViewers", vLog.Data)
+		errGenerate = generateResetViewersMsg(eventResetViewers)
+	default:
+		log.Fatal("Failed to unpack log data into any event type")
 	}
-	log.Printf("Failed to unpack log data into PostedFile: %v %v", errUnpack, errGenerate)
 
-	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, "PostedFileTree", vLog.Data); errUnpack == nil {
-		if errGenerate = generatePostedFileTreeMsg(eventPostedFileTree); errGenerate == nil {
-			goto execute
-		}
+	if errUnpack != nil || errGenerate != nil {
+		log.Fatalf("Failed to unpack event %v: %v %v", eventSig, errUnpack, errGenerate)
 	}
-	log.Printf("Failed to unpack log data into PostedFileTree: %v  %v", errUnpack, errGenerate)
 
-	if errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, "BoughtStorage", vLog.Data); errUnpack == nil {
-		if errGenerate = generateBoughtStorageMsg(q, eventBoughtStorage); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into BoughtStorage: %v  %v", errUnpack, errGenerate)
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, "DeletedFile", vLog.Data); errUnpack == nil {
-		if errGenerate = generateDeletedFileMsg(eventDeletedFile); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into DeletedFile: %v  %v", errUnpack, errGenerate)
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, "RequestedReportForm", vLog.Data); errUnpack == nil {
-		if errGenerate = generateRequestedReportFormMsg(eventRequestedReportForm); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into RequestedReportForm: %v  %v", errUnpack, errGenerate)
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, "ProvisionedFileTree", vLog.Data); errUnpack == nil {
-		if errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into ProvisionedFileTree: %v  %v", errUnpack, errGenerate)
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, "DeletedFileTree", vLog.Data); errUnpack == nil {
-		if errGenerate = generateDeletedFileTreeMsg(eventDeletedFileTree); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into DeletedFileTree: %v  %v", errUnpack, errGenerate)
-
-	if errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, "PostedKey", vLog.Data); errUnpack == nil {
-		if errGenerate = generatePostedKeyMsg(eventPostedKey); errGenerate == nil {
-			goto execute
-		}
-	}
-	log.Printf("Failed to unpack log data into PostedKey: %v  %v", errUnpack, errGenerate)
-
-	log.Fatal("Failed to unpack log data into all event types")
-
-execute:
 	factoryMsg = evmTypes.ExecuteFactoryMsg{
 		CallBindings: &evmTypes.ExecuteMsgCallBindings{
 			EvmAddress: &evmAddress,
@@ -332,4 +360,8 @@ func merkleToString(merkle string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(merkleRoot), nil
+}
+
+func expectedSig(function string) string {
+	return crypto.Keccak256Hash([]byte(function)).Hex()
 }
