@@ -160,6 +160,57 @@
   },
   {
     "type": "function",
+    "name": "changeOwner",
+    "inputs": [
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "new_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "changeOwnerFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "new_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "deleteFile",
     "inputs": [
       {
@@ -768,6 +819,37 @@
       },
       {
         "name": "referral",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ChangedOwner",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "new_owner",
         "type": "string",
         "indexed": false,
         "internalType": "string"

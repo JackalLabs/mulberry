@@ -24,6 +24,7 @@ abstract contract Jackal {
     event AddedViewers(address from, string viewer_ids, string viewer_keys, string for_address, string file_owner);
     event RemovedViewers(address from, string viewer_ids, string for_address, string file_owner);
     event ResetViewers(address from, string for_address, string file_owner);
+    event ChangedOwner(address from, string for_address, string file_owner, string new_owner);
 
     function getPrice() public view virtual returns (int256);
 
@@ -190,7 +191,6 @@ abstract contract Jackal {
         string memory editors,
         string memory tracking_number
     ) public validAddress hasAllowance(from) {
-        // confirm postFileTree is free
         emit PostedFileTree(from, account, hash_parent, hash_child, contents, viewers, editors, tracking_number);
     }
 
@@ -236,5 +236,17 @@ abstract contract Jackal {
         hasAllowance(from)
     {
         emit ResetViewers(from, for_address, file_owner);
+    }
+
+    function changeOwner(string memory for_address, string memory file_owner, string memory new_owner) public {
+        changeOwnerFrom(msg.sender, for_address, file_owner, new_owner);
+    }
+
+    function changeOwnerFrom(address from, string memory for_address, string memory file_owner, string memory new_owner)
+        public
+        validAddress
+        hasAllowance(from)
+    {
+        emit ChangedOwner(from, for_address, file_owner, new_owner);
     }
 }
