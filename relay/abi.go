@@ -255,6 +255,20 @@ func generateResetViewersMsg(event ResetViewers) (err error) {
 	return
 }
 
+func generateChangedOwnerMsg(event ChangedOwner) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		ChangeOwner: &evmTypes.ExecuteMsgChangeOwner{
+			Address:   event.ForAddress,
+			FileOwner: event.FileOwner,
+			NewOwner:  event.NewOwner,
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
@@ -303,6 +317,10 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		eventResetViewers := ResetViewers{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventResetViewers, "ResetViewers", vLog.Data)
 		errGenerate = generateResetViewersMsg(eventResetViewers)
+	case expectedSig("ChangedOwner(address,string,string,string)"):
+		eventChangedOwner := ChangedOwner{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventChangedOwner, "ChangedOwner", vLog.Data)
+		errGenerate = generateChangedOwnerMsg(eventChangedOwner)
 	default:
 		log.Fatal("Failed to unpack log data into any event type")
 	}
