@@ -100,3 +100,10 @@ type ResetViewers struct {
 	ForAddress string
 	FileOwner  string
 }
+
+type ChangedOwner struct {
+	From       common.Address
+	ForAddress string
+	FileOwner  string
+	NewOwner   string
+}
