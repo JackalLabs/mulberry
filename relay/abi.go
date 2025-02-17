@@ -269,6 +269,48 @@ func generateChangedOwnerMsg(event ChangedOwner) (err error) {
 	return
 }
 
+func generateAddedEditorsMsg(event AddedEditors) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		AddEditors: &evmTypes.ExecuteMsgAddEditors{
+			EditorIds:  event.EditorIds,
+			EditorKeys: event.EditorKeys,
+			Address:    event.ForAddress,
+			FileOwner:  event.FileOwner,
+		},
+	}
+	return
+}
+
+func generateRemovedEditorsMsg(event RemovedEditors) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		RemoveEditors: &evmTypes.ExecuteMsgRemoveEditors{
+			EditorIds: event.EditorIds,
+			Address:   event.ForAddress,
+			FileOwner: event.FileOwner,
+		},
+	}
+	return
+}
+
+func generateResetEditorsMsg(event ResetEditors) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		ResetEditors: &evmTypes.ExecuteMsgResetEditors{
+			Address:   event.ForAddress,
+			FileOwner: event.FileOwner,
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
@@ -321,6 +363,18 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		eventChangedOwner := ChangedOwner{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventChangedOwner, "ChangedOwner", vLog.Data)
 		errGenerate = generateChangedOwnerMsg(eventChangedOwner)
+	case expectedSig("AddedEditors(address,string,string,string,string)"):
+		eventAddedEditors := AddedEditors{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventAddedEditors, "AddedEditors", vLog.Data)
+		errGenerate = generateAddedEditorsMsg(eventAddedEditors)
+	case expectedSig("RemovedEditors(address,string,string,string)"):
+		eventRemovedEditors := RemovedEditors{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedEditors, "RemovedEditors", vLog.Data)
+		errGenerate = generateRemovedEditorsMsg(eventRemovedEditors)
+	case expectedSig("ResetEditors(address,string,string)"):
+		eventResetEditors := ResetEditors{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventResetEditors, "ResetEditors", vLog.Data)
+		errGenerate = generateResetEditorsMsg(eventResetEditors)
 	default:
 		log.Fatal("Failed to unpack log data into any event type")
 	}
