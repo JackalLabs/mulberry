@@ -13,6 +13,9 @@ type ExecuteMsg struct {
 	RemoveViewers     *ExecuteMsgRemoveViewers     `json:"remove_viewers,omitempty"`
 	ResetViewers      *ExecuteMsgResetViewers      `json:"reset_viewers,omitempty"`
 	ChangeOwner       *ExecuteMsgChangeOwner       `json:"change_owner,omitempty"`
+	AddEditors        *ExecuteMsgAddEditors        `json:"add_editors,omitempty"`
+	RemoveEditors     *ExecuteMsgRemoveEditors     `json:"remove_editors,omitempty"`
+	ResetEditors      *ExecuteMsgResetEditors      `json:"reset_editors,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -92,6 +95,24 @@ type ExecuteMsgChangeOwner struct {
 	Address   string `json:"address"`
 	FileOwner string `json:"file_owner"`
 	NewOwner  string `json:"new_owner"`
+}
+
+type ExecuteMsgAddEditors struct {
+	EditorIds  string `json:"editor_ids"`
+	EditorKeys string `json:"editor_keys"`
+	Address    string `json:"address"`
+	FileOwner  string `json:"file_owner"`
+}
+
+type ExecuteMsgRemoveEditors struct {
+	EditorIds string `json:"editor_ids"`
+	Address   string `json:"address"`
+	FileOwner string `json:"file_owner"`
+}
+
+type ExecuteMsgResetEditors struct {
+	Address   string `json:"address"`
+	FileOwner string `json:"file_owner"`
 }
 
 // ToString returns a string representation of the message
