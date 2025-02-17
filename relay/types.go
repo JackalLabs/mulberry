@@ -107,3 +107,24 @@ type ChangedOwner struct {
 	FileOwner  string
 	NewOwner   string
 }
+
+type AddedEditors struct {
+	From       common.Address
+	EditorIds  string
+	EditorKeys string
+	ForAddress string
+	FileOwner  string
+}
+
+type RemovedEditors struct {
+	From       common.Address
+	EditorIds  string
+	ForAddress string
+	FileOwner  string
+}
+
+type ResetEditors struct {
+	From       common.Address
+	ForAddress string
+	FileOwner  string
+}
