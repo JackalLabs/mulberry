@@ -14,6 +14,67 @@
   },
   {
     "type": "function",
+    "name": "addEditors",
+    "inputs": [
+      {
+        "name": "editor_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "editor_keys",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "addEditorsFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "editor_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "editor_keys",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "addViewers",
     "inputs": [
       {
@@ -601,6 +662,57 @@
   },
   {
     "type": "function",
+    "name": "removeEditors",
+    "inputs": [
+      {
+        "name": "editor_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "removeEditorsFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "editor_ids",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "removeViewers",
     "inputs": [
       {
@@ -713,6 +825,47 @@
   },
   {
     "type": "function",
+    "name": "resetEditors",
+    "inputs": [
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "resetEditorsFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "resetViewers",
     "inputs": [
       {
@@ -751,6 +904,43 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AddedEditors",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "editor_ids",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "editor_keys",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -1051,6 +1241,37 @@
   },
   {
     "type": "event",
+    "name": "RemovedEditors",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "editor_ids",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "RemovedViewers",
     "inputs": [
       {
@@ -1113,6 +1334,31 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ResetEditors",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "for_address",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "file_owner",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false
