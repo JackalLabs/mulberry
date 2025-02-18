@@ -128,3 +128,16 @@ type ResetEditors struct {
 	ForAddress string
 	FileOwner  string
 }
+
+type CreatedNotification struct {
+	From            common.Address
+	To              string
+	Contents        string
+	PrivateContents string
+}
+
+type DeletedNotification struct {
+	From             common.Address
+	NotificationFrom string
+	Time             uint64
+}

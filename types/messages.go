@@ -1,21 +1,23 @@
 package types
 
 type ExecuteMsg struct {
-	PostKey           *ExecuteMsgPostKey           `json:"post_key,omitempty"`
-	PostFile          *ExecuteMsgPostFile          `json:"post_file,omitempty"`
-	BuyStorage        *ExecuteMsgBuyStorage        `json:"buy_storage,omitempty"`
-	DeleteFile        *ExecuteMsgDeleteFile        `json:"delete_file,omitempty"`
-	RequestReportForm *ExecuteMsgRequestReportForm `json:"request_report_form,omitempty"`
-	DeleteFileTree    *ExecuteMsgDeleteFileTree    `json:"delete_file_tree,omitempty"`
-	ProvisionFileTree *ExecuteMsgProvisionFileTree `json:"provision_file_tree,omitempty"`
-	PostFileTree      *ExecuteMsgPostFileTree      `json:"post_file_tree,omitempty"`
-	AddViewers        *ExecuteMsgAddViewers        `json:"add_viewers,omitempty"`
-	RemoveViewers     *ExecuteMsgRemoveViewers     `json:"remove_viewers,omitempty"`
-	ResetViewers      *ExecuteMsgResetViewers      `json:"reset_viewers,omitempty"`
-	ChangeOwner       *ExecuteMsgChangeOwner       `json:"change_owner,omitempty"`
-	AddEditors        *ExecuteMsgAddEditors        `json:"add_editors,omitempty"`
-	RemoveEditors     *ExecuteMsgRemoveEditors     `json:"remove_editors,omitempty"`
-	ResetEditors      *ExecuteMsgResetEditors      `json:"reset_editors,omitempty"`
+	PostKey            *ExecuteMsgPostKey            `json:"post_key,omitempty"`
+	PostFile           *ExecuteMsgPostFile           `json:"post_file,omitempty"`
+	BuyStorage         *ExecuteMsgBuyStorage         `json:"buy_storage,omitempty"`
+	DeleteFile         *ExecuteMsgDeleteFile         `json:"delete_file,omitempty"`
+	RequestReportForm  *ExecuteMsgRequestReportForm  `json:"request_report_form,omitempty"`
+	DeleteFileTree     *ExecuteMsgDeleteFileTree     `json:"delete_file_tree,omitempty"`
+	ProvisionFileTree  *ExecuteMsgProvisionFileTree  `json:"provision_file_tree,omitempty"`
+	PostFileTree       *ExecuteMsgPostFileTree       `json:"post_file_tree,omitempty"`
+	AddViewers         *ExecuteMsgAddViewers         `json:"add_viewers,omitempty"`
+	RemoveViewers      *ExecuteMsgRemoveViewers      `json:"remove_viewers,omitempty"`
+	ResetViewers       *ExecuteMsgResetViewers       `json:"reset_viewers,omitempty"`
+	ChangeOwner        *ExecuteMsgChangeOwner        `json:"change_owner,omitempty"`
+	AddEditors         *ExecuteMsgAddEditors         `json:"add_editors,omitempty"`
+	RemoveEditors      *ExecuteMsgRemoveEditors      `json:"remove_editors,omitempty"`
+	ResetEditors       *ExecuteMsgResetEditors       `json:"reset_editors,omitempty"`
+	CreateNotification *ExecuteMsgCreateNotification `json:"create_notification,omitempty"`
+	DeleteNotification *ExecuteMsgDeleteNotification `json:"delete_notification,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -113,6 +115,17 @@ type ExecuteMsgRemoveEditors struct {
 type ExecuteMsgResetEditors struct {
 	Address   string `json:"address"`
 	FileOwner string `json:"file_owner"`
+}
+
+type ExecuteMsgCreateNotification struct {
+	To              string `json:"to"`
+	Contents        string `json:"contents"`
+	PrivateContents string `json:"private_contents"`
+}
+
+type ExecuteMsgDeleteNotification struct {
+	From string `json:"from"`
+	Time int64  `json:"time"`
 }
 
 // ToString returns a string representation of the message
