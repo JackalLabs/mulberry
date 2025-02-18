@@ -272,6 +272,57 @@
   },
   {
     "type": "function",
+    "name": "createNotification",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "contents",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "private_contents",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createNotificationFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "contents",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "private_contents",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "deleteFile",
     "inputs": [
       {
@@ -347,6 +398,47 @@
         "name": "account",
         "type": "string",
         "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deleteNotification",
+    "inputs": [
+      {
+        "name": "notification_from",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "time",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deleteNotificationFrom",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "notification_from",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "time",
+        "type": "uint64",
+        "internalType": "uint64"
       }
     ],
     "outputs": [],
@@ -1049,6 +1141,37 @@
   },
   {
     "type": "event",
+    "name": "CreatedNotification",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "contents",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "private_contents",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "DeletedFile",
     "inputs": [
       {
@@ -1093,6 +1216,31 @@
         "type": "string",
         "indexed": false,
         "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "DeletedNotification",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "notification_from",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "time",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
       }
     ],
     "anonymous": false
