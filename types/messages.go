@@ -18,6 +18,7 @@ type ExecuteMsg struct {
 	ResetEditors       *ExecuteMsgResetEditors       `json:"reset_editors,omitempty"`
 	CreateNotification *ExecuteMsgCreateNotification `json:"create_notification,omitempty"`
 	DeleteNotification *ExecuteMsgDeleteNotification `json:"delete_notification,omitempty"`
+	BlockedSenders     *ExecuteMsgBlockedSenders     `json:"block_senders,omitempty"`
 }
 
 type ExecuteMsgPostKey struct {
@@ -126,6 +127,10 @@ type ExecuteMsgCreateNotification struct {
 type ExecuteMsgDeleteNotification struct {
 	From string `json:"from"`
 	Time int64  `json:"time"`
+}
+
+type ExecuteMsgBlockedSenders struct {
+	ToBlock []string `json:"to_block"`
 }
 
 // ToString returns a string representation of the message

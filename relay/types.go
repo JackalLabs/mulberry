@@ -141,3 +141,8 @@ type DeletedNotification struct {
 	NotificationFrom string
 	Time             uint64
 }
+
+type BlockedSenders struct {
+	From    common.Address
+	ToBlock []string
+}

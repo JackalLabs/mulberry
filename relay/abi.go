@@ -338,6 +338,18 @@ func generateDeletedNotificationMsg(event DeletedNotification) (err error) {
 	return
 }
 
+func generateBlockedSendersMsg(event BlockedSenders) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		BlockedSenders: &evmTypes.ExecuteMsgBlockedSenders{
+			ToBlock: event.ToBlock,
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
@@ -410,6 +422,10 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		eventDeletedNotification := DeletedNotification{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedNotification, "DeletedNotification", vLog.Data)
 		errGenerate = generateDeletedNotificationMsg(eventDeletedNotification)
+	case expectedSig("BlockedSenders(address,string[])"):
+		eventBlockedSenders := BlockedSenders{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventBlockedSenders, "BlockedSenders", vLog.Data)
+		errGenerate = generateBlockedSendersMsg(eventBlockedSenders)
 	default:
 		log.Fatal("Failed to unpack log data into any event type")
 	}
