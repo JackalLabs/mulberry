@@ -29,6 +29,52 @@ abstract contract Jackal {
     event RemovedEditors(address from, string editor_ids, string for_address, string file_owner);
     event ResetEditors(address from, string for_address, string file_owner);
 
+    struct JackalMessage {
+        string id;
+        address sender;
+        uint height;
+        uint256 value;
+    }
+
+    JackalMessage[] public messages;
+
+    function newMessage(address sender, string memory messageType) private returns (string memory){
+        uint height = block.number;
+
+        string memory s = string.concat(messageType, Strings.toHexString(uint160(sender), 20));
+        s = string.concat(s, Strings.toString(height));
+
+        JackalMessage memory message = JackalMessage(s, sender, height, msg.value);
+
+        messages.push(message);
+
+        return s;
+    }
+
+    function _remove(uint index) internal {
+        require(index < messages.length);
+        messages[index] = messages[messages.length - 1];
+        messages.pop();
+    }
+
+    function refund(string memory id) public {
+        refundFrom(payable(msg.sender), id);
+    }
+
+    function refundFrom(address payable from, string memory id) public hasAllowance(from) {
+        for (uint i = 0; i < messages.length; i ++) {
+            JackalMessage memory m = messages[i];
+            if (Strings.equal(m.id, id)) { // if we found the item we're looking for
+                if (m.height + 60 < block.number) { // if 60 blocks have passed and this message is still here
+                    from.transfer(m.value);
+                    _remove(i);
+                }
+            }
+        }
+    }
+
+
+
     function getPrice() public view virtual returns (int256);
 
     mapping(address => mapping(address => bool)) public allowances;
@@ -85,10 +131,10 @@ abstract contract Jackal {
     }
 
     function postFileFrom(address from, string memory merkle, uint64 filesize, string memory note, uint64 expires)
-        public
-        payable
-        validAddress
-        hasAllowance(from)
+    public
+    payable
+    validAddress
+    hasAllowance(from)
     {
         require(expires >= 30 || expires == 0);
         if (expires != 0) {
@@ -99,8 +145,8 @@ abstract contract Jackal {
     }
 
     function buyStorage(string memory for_address, uint64 duration_days, uint64 size_bytes, string memory referral)
-        public
-        payable
+    public
+    payable
     {
         buyStorageFrom(msg.sender, for_address, duration_days, size_bytes, referral);
     }
@@ -152,9 +198,9 @@ abstract contract Jackal {
     }
 
     function deleteFileTreeFrom(address from, string memory hash_path, string memory account)
-        public
-        validAddress
-        hasAllowance(from)
+    public
+    validAddress
+    hasAllowance(from)
     {
         emit DeletedFileTree(from, hash_path, account);
     }
@@ -234,9 +280,9 @@ abstract contract Jackal {
     }
 
     function resetViewersFrom(address from, string memory for_address, string memory file_owner)
-        public
-        validAddress
-        hasAllowance(from)
+    public
+    validAddress
+    hasAllowance(from)
     {
         emit ResetViewers(from, for_address, file_owner);
     }
@@ -246,9 +292,9 @@ abstract contract Jackal {
     }
 
     function changeOwnerFrom(address from, string memory for_address, string memory file_owner, string memory new_owner)
-        public
-        validAddress
-        hasAllowance(from)
+    public
+    validAddress
+    hasAllowance(from)
     {
         emit ChangedOwner(from, for_address, file_owner, new_owner);
     }
@@ -290,9 +336,9 @@ abstract contract Jackal {
     }
 
     function resetEditorsFrom(address from, string memory for_address, string memory file_owner)
-        public
-        validAddress
-        hasAllowance(from)
+    public
+    validAddress
+    hasAllowance(from)
     {
         emit ResetEditors(from, for_address, file_owner);
     }
