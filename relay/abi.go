@@ -311,6 +311,33 @@ func generateResetEditorsMsg(event ResetEditors) (err error) {
 	return
 }
 
+func generateCreatedNotificationMsg(event CreatedNotification) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		CreateNotification: &evmTypes.ExecuteMsgCreateNotification{
+			To:              event.To,
+			Contents:        event.Contents,
+			PrivateContents: event.PrivateContents,
+		},
+	}
+	return
+}
+
+func generateDeletedNotificationMsg(event DeletedNotification) (err error) {
+	log.Printf("Event details: %+v", event)
+	evmAddress = event.From.String()
+
+	relayedMsg = evmTypes.ExecuteMsg{
+		DeleteNotification: &evmTypes.ExecuteMsgDeleteNotification{
+			From: event.NotificationFrom,
+			Time: int64(event.Time),
+		},
+	}
+	return
+}
+
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
@@ -375,6 +402,14 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 		eventResetEditors := ResetEditors{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventResetEditors, "ResetEditors", vLog.Data)
 		errGenerate = generateResetEditorsMsg(eventResetEditors)
+	case expectedSig("CreatedNotification(address,string,string,string)"):
+		eventCreatedNotification := CreatedNotification{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventCreatedNotification, "CreatedNotification", vLog.Data)
+		errGenerate = generateCreatedNotificationMsg(eventCreatedNotification)
+	case expectedSig("DeletedNotification(address,string,uint64)"):
+		eventDeletedNotification := DeletedNotification{}
+		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedNotification, "DeletedNotification", vLog.Data)
+		errGenerate = generateDeletedNotificationMsg(eventDeletedNotification)
 	default:
 		log.Fatal("Failed to unpack log data into any event type")
 	}
