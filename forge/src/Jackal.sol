@@ -30,6 +30,7 @@ abstract contract Jackal {
     event ResetEditors(address from, string for_address, string file_owner);
     event CreatedNotification(address from, string to, string contents, string private_contents);
     event DeletedNotification(address from, string notification_from, uint64 time);
+    event BlockedSenders(address from, string[] to_block);
 
     function getPrice() public view virtual returns (int256);
 
@@ -61,6 +62,7 @@ abstract contract Jackal {
     }
 
     function getStoragePrice(uint64 filesize, uint256 months) public view returns (uint256) {
+        // requires chainlink oracle, will not work on localnet
         uint256 price = uint256(getPrice());
         uint256 storagePrice = 15; // price at 8 decimal places
         uint256 multiplier = 2;
@@ -322,5 +324,13 @@ abstract contract Jackal {
         hasAllowance(from)
     {
         emit DeletedNotification(from, notification_from, time);
+    }
+
+    function blockSenders(string[] memory to_block) public {
+        blockSendersFrom(msg.sender, to_block);
+    }
+
+    function blockSendersFrom(address from, string[] memory to_block) public validAddress hasAllowance(from) {
+        emit BlockedSenders(from, to_block);
     }
 }
