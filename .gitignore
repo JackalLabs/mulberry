@@ -8,3 +8,4 @@ contracts/cache
 .env
 
 *.txt
+mulberry
