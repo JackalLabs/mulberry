@@ -109,7 +109,7 @@ Transaction hash: 0x2437fa2e7af22c308e09ff3e2d6d06f403349675c5ecf52b6eca7074097a
 ```
 
 # config
-```
+```yaml
 jackal_config:
     rpc: https://testnet-rpc.jackalprotocol.com:443
     grpc: jackal-testnet-grpc.polkachu.com:17590
