@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/interfaces/feeds/AggregatorV3Interface.sol";
 import {Jackal} from "./Jackal.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract JackalBridge is Ownable, Jackal {
     AggregatorV3Interface internal priceFeed;
@@ -21,6 +22,15 @@ contract JackalBridge is Ownable, Jackal {
     modifier onlyOwnerOrRelay() {
         require(msg.sender == owner() || isRelay(msg.sender), "not owner or relay");
         _;
+    }
+
+    function finishMessage(string memory id) public onlyOwnerOrRelay { // needs to be from a relayer
+        for (uint i = 0; i < messages.length; i ++) {
+            JackalMessage memory m = messages[i];
+            if (Strings.equal(m.id, id)) { // if we found the item we're looking for
+                _remove(i);
+            }
+        }
     }
 
     function isRelay(address _relay) internal view returns (bool) {
