@@ -17,7 +17,9 @@ import (
 )
 
 func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.WaitGroup) {
-	log.Printf("Connecting to %s", network.Name)
+	subLogger := log.With().Str("network", network.Name).Logger()
+
+	subLogger.Printf("Connecting to %s", network.Name)
 
 	jackalContract := a.cfg.JackalConfig.Contract
 
@@ -38,16 +40,16 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 	for !stopped {
 		_, err := ethclient.Dial(network.RPC)
 		if err != nil {
-			log.Printf("Failed to connect to the Ethereum RPC client, retrying in 5 seconds: %v", err)
-			log.Printf("rpc client: %s", network.RPC)
+			subLogger.Printf("Failed to connect to the Ethereum RPC client, retrying in 5 seconds: %v", err)
+			subLogger.Printf("rpc client: %s", network.RPC)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
 		wsClient, err := ethclient.Dial(network.WS)
 		if err != nil {
-			log.Printf("Failed to connect to the Ethereum WS client, retrying in 5 seconds: %v", err)
-			log.Printf("ws client: %s", network.WS)
+			subLogger.Printf("Failed to connect to the Ethereum WS client, retrying in 5 seconds: %v", err)
+			subLogger.Printf("ws client: %s", network.WS)
 
 			if wsClient != nil {
 				wsClient.Close()
@@ -58,8 +60,8 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 
 		sub, logs, err = subscribeLogs(wsClient, query)
 		if err != nil {
-			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
-			log.Printf("ws client: %s", network.WS)
+			subLogger.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
+			subLogger.Printf("ws client: %s", network.WS)
 			if wsClient != nil {
 				wsClient.Close()
 			}
@@ -67,7 +69,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 			continue
 		}
 
-		log.Printf("Ready to listen on %s", network.Name)
+		subLogger.Printf("Ready to listen on %s", network.Name)
 
 		// Listening loop
 		func() {
@@ -86,13 +88,13 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 					stopped = true
 					return
 				case err := <-sub.Err():
-					log.Printf("Subscription error, reconnecting: %v", err)
+					subLogger.Printf("Subscription error, reconnecting: %v", err)
 					return // Break out of the loop to retry
 				case vLog := <-logs:
-					log.Printf("Log received: %s", vLog.Address.Hex())
+					subLogger.Printf("Log received: %s", vLog.Address.Hex())
 
 					go func(vLog types.Log) {
-						err := waitForReceipt(wsClient, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
+						err := waitForReceipt(wsClient, vLog.TxHash, network, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
 								if l.Address.Hex() == contractAddress.Hex() && len(l.Data) > 0 {
 									handleLog(l, a.w, a.q, network.ChainID, jackalContract)
@@ -100,7 +102,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 							}
 						})
 						if err != nil {
-							log.Printf("Error getting receipt for tx %s: %v", vLog.TxHash.Hex(), err)
+							subLogger.Printf("Error getting receipt for tx %s: %v", vLog.TxHash.Hex(), err)
 						}
 					}(vLog)
 				}

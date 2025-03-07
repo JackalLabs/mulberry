@@ -161,7 +161,9 @@ func subscribeLogs(client *ethclient.Client, query ethereum.FilterQuery) (ethere
 }
 
 // waitForReceipt polls for the transaction receipt until it's available
-func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, finality uint64, callBack func(receipt *types.Receipt)) error {
+func waitForReceipt(client *ethclient.Client, txHash common.Hash, network config.NetworkConfig, callBack func(receipt *types.Receipt)) error {
+	subLogger := log.With().Str("network", network.Name).Logger()
+
 	var errCount int64
 	for {
 		if errCount > 30 {
@@ -169,17 +171,16 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, final
 		}
 
 		time.Sleep(3 * time.Second)
-
 		receipt, err := client.TransactionReceipt(context.Background(), txHash)
 		if err != nil {
-			log.Printf("cannot get receipt from network | %s", err.Error())
+			subLogger.Printf("cannot get receipt from network | %s", err.Error())
 			errCount++
 			continue
 		}
 
 		latestBlock, err := client.BlockNumber(context.Background())
 		if err != nil {
-			log.Printf("cannot get current height | %s", err.Error())
+			subLogger.Printf("cannot get current height | %s", err.Error())
 			errCount++
 			continue
 		}
@@ -187,11 +188,11 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, final
 		txBlock := receipt.BlockNumber.Uint64()
 
 		blockDiff := latestBlock - txBlock
-		if blockDiff >= finality {
+		if blockDiff >= network.Finality {
 			callBack(receipt)
 			return nil
 		} else {
-			log.Printf("Still waiting %d more blocks for %s on %d...", finality-blockDiff, txHash.String(), chainId)
+			subLogger.Printf("Still waiting %d more blocks for %s on %d...", network.Finality-blockDiff, txHash.String(), network.ChainID)
 		}
 	}
 }
