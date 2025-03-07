@@ -117,26 +117,26 @@ jackal_config:
     contract: jkl163jzm5mmy29ke6ecn4m5evqk9lfhxwne3vzjpe3lpyc33yz5uy0skhhxm8
 networks_config:
     - name: Sepolia
-      rpc: https://ethereum-sepolia-rpc.publicnode.com
-      ws: wss://ethereum-sepolia-rpc.publicnode.com
+      rpc: https://rpc.sepolia.dev
+      ws: wss://rpc.sepolia.dev
       contract: 0x093BB75ba20F4fe05c31a63ac42B93252C31aE02
       chain_id: 11155111
       finality: 2
     - name: Base Sepolia
-      rpc: https://base-sepolia-rpc.publicnode.com
-      ws: wss://base-sepolia-rpc.publicnode.com
+      rpc: https://sepolia.base.org
+      ws: wss://sepolia.base.org
       contract: 0x5d26f092717A538B446A301C2121D6C68157467C
       chain_id: 84532
       finality: 2
     - name: OP Sepolia
-      rpc: https://optimism-sepolia-rpc.publicnode.com
-      ws: wss://optimism-sepolia-rpc.publicnode.com
+      rpc: https://sepolia.optimism.io
+      ws: wss://sepolia.optimism.io
       contract: 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2
       chain_id: 11155420
       finality: 2
     - name: Polygon Amoy
-      rpc: https://polygon-amoy-bor-rpc.publicnode.com
-      ws: wss://polygon-amoy-bor-rpc.publicnode.com
+      rpc: https://rpc-amoy.polygon.technology
+      ws: wss://rpc-amoy.polygon.technology
       contract: 0x5d26f092717A538B446A301C2121D6C68157467C
       chain_id: 80002
       finality: 2
