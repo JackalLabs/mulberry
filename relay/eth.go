@@ -17,7 +17,7 @@ import (
 )
 
 func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.WaitGroup) {
-	log.Printf("Now listening to %s...", network.Name)
+	log.Printf("Connecting to %s", network.Name)
 
 	jackalContract := a.cfg.JackalConfig.Contract
 
@@ -39,6 +39,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 		_, err := ethclient.Dial(network.RPC)
 		if err != nil {
 			log.Printf("Failed to connect to the Ethereum RPC client, retrying in 5 seconds: %v", err)
+			log.Printf("rpc client: %s", network.RPC)
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -58,6 +59,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 		sub, logs, err = subscribeLogs(wsClient, query)
 		if err != nil {
 			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
+			log.Printf("ws client: %s", network.WS)
 			if wsClient != nil {
 				wsClient.Close()
 			}
@@ -65,7 +67,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 			continue
 		}
 
-		log.Print("Ready to listen!")
+		log.Printf("Ready to listen on %s", network.Name)
 
 		// Listening loop
 		func() {
