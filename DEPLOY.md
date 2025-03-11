@@ -109,6 +109,7 @@ Transaction hash: 0x2437fa2e7af22c308e09ff3e2d6d06f403349675c5ecf52b6eca7074097a
 ```
 
 # config
+The most up-to-date config should be at [config/config.go](config/config.go).
 ```yaml
 jackal_config:
     rpc: https://testnet-rpc.jackalprotocol.com:443
