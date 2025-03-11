@@ -108,6 +108,33 @@ Deployed to: 0x7dAB0A27c5aB9D1Fb3D2f91E9f0eee9BD051a448
 Transaction hash: 0x2437fa2e7af22c308e09ff3e2d6d06f403349675c5ecf52b6eca7074097a6785
 ```
 
+# arbitrum
+## process
+```bash
+export ARBITRUM_RPC_URL="https://arb1.arbitrum.io/rpc"
+export ARBITRUM_SEPOLIA_RPC_URL="https://sepolia-rollup.arbitrum.io/rpc"
+cast wallet import deployer --interactive # import private key
+forge create src/JackalV1.sol:JackalBridge --root forge --rpc-url $ARBITRUM_SEPOLIA_RPC_URL --account deployer --constructor-args "[0x8792729C879B8B6436e3Dcae8780955ed92F5Af1]" 0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165 # "[relay]" price_feed
+forge create src/StorageDrawer.sol:StorageDrawer --root forge --rpc-url $ARBITRUM_SEPOLIA_RPC_URL --account deployer --constructor-args 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2 # bridge
+# re-run the above two commands with --broadcast
+nano ~/.mulberry/config.yaml # add network information
+```
+## results
+```
+[⠊] Compiling...
+No files changed, compilation skipped
+Enter keystore password:
+Deployer: 0x8792729C879B8B6436e3Dcae8780955ed92F5Af1
+Deployed to: 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2
+Transaction hash: 0x52930c12b158e02a5a1bd251d0c1cc951a85fdc68f592348d611224cf7937046
+[⠊] Compiling...
+No files changed, compilation skipped
+Enter keystore password:
+Deployer: 0x8792729C879B8B6436e3Dcae8780955ed92F5Af1
+Deployed to: 0x5d26f092717A538B446A301C2121D6C68157467C
+Transaction hash: 0x42eed98b7267085a8764b10dc6804af17dfd59682d96b1a770b43713f2758cd5
+```
+
 # config
 The most up-to-date config should be at [config/config.go](config/config.go).
 ```yaml
@@ -140,5 +167,11 @@ networks_config:
       ws: wss://polygon-amoy-bor-rpc.publicnode.com
       contract: 0x5d26f092717A538B446A301C2121D6C68157467C
       chain_id: 80002
+      finality: 2
+    - name: Arbitrum Sepolia
+      rpc: https://arbitrum-sepolia-rpc.publicnode.com
+      ws: wss://arbitrum-sepolia-rpc.publicnode.com
+      contract: 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2
+      chain_id: 421614
       finality: 2
 ```
