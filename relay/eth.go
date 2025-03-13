@@ -68,7 +68,6 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 			time.Sleep(5 * time.Second)
 			continue
 		}
-
 		subLogger.Printf("Ready to listen on %s", network.Name)
 
 		// Listening loop
