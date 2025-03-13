@@ -135,6 +135,33 @@ Deployed to: 0x5d26f092717A538B446A301C2121D6C68157467C
 Transaction hash: 0x42eed98b7267085a8764b10dc6804af17dfd59682d96b1a770b43713f2758cd5
 ```
 
+# soneium
+## process
+```bash
+export SONEIUM_RPC_URL="https://rpc.soneium.org"
+export SONEIUM_MINATO_RPC_URL="https://rpc.minato.soneium.org"
+cast wallet import deployer --interactive # import private key
+forge create src/JackalV1.sol:JackalBridge --root forge --rpc-url $SONEIUM_MINATO_RPC_URL --account deployer --constructor-args "[0x8792729C879B8B6436e3Dcae8780955ed92F5Af1]" 0xCA50964d2Cf6366456a607E5e1DBCE381A8BA807 # "[relay]" price_feed
+forge create src/StorageDrawer.sol:StorageDrawer --root forge --rpc-url $SONEIUM_MINATO_RPC_URL --account deployer --constructor-args 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2 # bridge
+# re-run the above two commands with --broadcast
+nano ~/.mulberry/config.yaml # add network information
+```
+## results
+```
+[⠊] Compiling...
+No files changed, compilation skipped
+Enter keystore password:
+Deployer: 0x8792729C879B8B6436e3Dcae8780955ed92F5Af1
+Deployed to: 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2
+Transaction hash: 0x65691983fb3c1f0c778fe505d8bab30209d8847d33e3d554e6d7e92e6df54561
+[⠊] Compiling...
+No files changed, compilation skipped
+Enter keystore password:
+Deployer: 0x8792729C879B8B6436e3Dcae8780955ed92F5Af1
+Deployed to: 0x5d26f092717A538B446A301C2121D6C68157467C
+Transaction hash: 0x8f5c1256d77e498dd3e100f723eb56c0f86c1019b0aa72241b15393c81f67081
+```
+
 # config
 The most up-to-date config should be at [config/config.go](config/config.go).
 ```yaml
@@ -173,5 +200,11 @@ networks_config:
       ws: wss://arbitrum-sepolia-rpc.publicnode.com
       contract: 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2
       chain_id: 421614
+      finality: 2
+    - name: Soneium Minato
+      rpc: https://soneium-sepolia-rpc.publicnode.com
+      ws: wss://soneium-sepolia-rpc.publicnode.com
+      contract: 0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2
+      chain_id: 1946
       finality: 2
 ```
