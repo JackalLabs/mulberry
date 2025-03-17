@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	hdwallet "github.com/miguelmota/go-ethereum-hdwallet"
 	"github.com/spf13/viper"
 )
 
@@ -128,11 +129,11 @@ func MakeApp(homePath string) (*App, error) {
 		return nil, fmt.Errorf("cannot find seed file | %w", err)
 	}
 
-	seed := string(seedData)
+	mnemonic := string(seedData)
+	mnemonic = strings.TrimSpace(mnemonic)
 
-	seed = strings.TrimSpace(seed)
-
-	w, err := jWallet.CreateWallet(seed, "m/44'/118'/0'/0/0", walletTypes.ChainConfig{
+	// Jackal wallet
+	w, err := jWallet.CreateWallet(mnemonic, "m/44'/118'/0'/0/0", walletTypes.ChainConfig{
 		Bech32Prefix:  "jkl",
 		RPCAddr:       cfg.JackalConfig.RPC,
 		GRPCAddr:      cfg.JackalConfig.GRPC,
@@ -145,10 +146,25 @@ func MakeApp(homePath string) (*App, error) {
 
 	q := uploader.NewQueue(w)
 
+	// Ethereum wallet
+	wEth, err := hdwallet.NewFromMnemonic(mnemonic)
+	if err != nil {
+		return nil, err
+	}
+
+	path := hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0") // standard derivation path for ethereum
+	account, err := wEth.Derive(path, false)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf(account.Address.Hex())
+	// wallet.SignTx(account, types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data), nil)
+
 	app := App{
-		w:   w,
-		q:   q,
-		cfg: cfg,
+		w:    w,
+		wEth: wEth,
+		q:    q,
+		cfg:  cfg,
 	}
 
 	return &app, nil

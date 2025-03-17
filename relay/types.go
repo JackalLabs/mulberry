@@ -5,12 +5,14 @@ import (
 	"github.com/JackalLabs/mulberry/jackal/uploader"
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
 	"github.com/ethereum/go-ethereum/common"
+	hdwallet "github.com/miguelmota/go-ethereum-hdwallet"
 )
 
 type App struct {
-	w   *wallet.Wallet
-	q   *uploader.Queue
-	cfg config.Config
+	w    *wallet.Wallet
+	wEth *hdwallet.Wallet
+	q    *uploader.Queue
+	cfg  config.Config
 }
 
 var ChainIDS = map[uint64]string{
@@ -19,6 +21,7 @@ var ChainIDS = map[uint64]string{
 	137:   "Polygon",
 	10:    "OP",
 	42161: "Arbitrum",
+	1868:  "Soneium",
 }
 
 type PostedFile struct {
