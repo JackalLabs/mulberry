@@ -75,6 +75,14 @@ func DefaultConfig() Config {
 				ChainID:  421614,
 				Finality: 2,
 			},
+			{
+				Name:     "Soneium Minato",
+				RPC:      "https://soneium-sepolia-rpc.publicnode.com",
+				WS:       "wss://soneium-sepolia-rpc.publicnode.com",
+				Contract: "0xA3FF0a3e8edCd1c1BefBa6e48e847DB9feF82CA2",
+				ChainID:  1946,
+				Finality: 2,
+			},
 		},
 	}
 }
