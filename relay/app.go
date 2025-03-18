@@ -157,8 +157,7 @@ func MakeApp(homePath string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf(account.Address.Hex())
-	// wallet.SignTx(account, types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data), nil)
+	log.Printf("Mulberry EVM address: %v", account.Address.Hex())
 
 	app := App{
 		w:    w,
