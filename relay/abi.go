@@ -1,12 +1,14 @@
 package relay
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os/exec"
 	"strings"
 
 	_ "embed"
@@ -19,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	hdwallet "github.com/miguelmota/go-ethereum-hdwallet"
 )
 
 //go:embed abi.json
@@ -350,7 +353,7 @@ func generateBlockedSendersMsg(event BlockedSenders) (err error) {
 	return
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
+func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uploader.Queue, chainID uint64, RPC string, jackalContract string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
 	switch eventSig {
@@ -466,6 +469,40 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 
 	log.Println(res.RawLog)
 	log.Println(res.TxHash)
+
+	// callback on EVM chain
+	account, err := wEth.Derive(hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0"), false)
+	if err != nil {
+		log.Printf("Failed to derive account: %v", err)
+		return
+	}
+
+	// generate privkey and command
+	privKey, err := wEth.PrivateKeyHex(account)
+	if err != nil {
+		log.Printf("Failed to generate privkey: %v", err)
+		return
+	}
+
+	// 0 is a placeholder message id
+	cmdArgs := []string{"send", "--rpc-url", RPC, "--private-key", privKey, vLog.Address.Hex(), "finishMessage(string)", "0"}
+	cmd := exec.Command("cast", cmdArgs...)
+	log.Printf("Executing: %v", cmd.String())
+
+	// Capture debugging outpot
+	var stdoutBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	// err = cmd.Run()
+
+	// Extract the transaction hash if present
+	output := stdoutBuf.String()
+	for _, line := range strings.Split(output, "\n") {
+		if strings.HasPrefix(line, "transactionHash") {
+			log.Printf("Tx: %v", strings.TrimSpace(strings.Fields(line)[1]))
+			break
+		}
+	}
+	log.Print("Mock execution complete")
 }
 
 func chainRep(id uint64) string {
