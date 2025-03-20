@@ -118,7 +118,7 @@ func MakeApp(homePath string) (*App, error) {
 				return nil, fmt.Errorf("cannot write seed file | %w", err)
 			}
 
-			fmt.Printf("You have just generated a new seed phrase for this relay at %s", seedPath)
+			fmt.Printf("You have just generated a new seed phrase for this relay at %s\n", seedPath)
 		} else {
 			return nil, fmt.Errorf("something is wrong with the seed file | %w", err)
 		}
@@ -157,7 +157,7 @@ func MakeApp(homePath string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Mulberry EVM address: %v", account.Address.Hex())
+	fmt.Printf("Mulberry EVM address: %v\n", account.Address.Hex())
 
 	app := App{
 		w:    w,
