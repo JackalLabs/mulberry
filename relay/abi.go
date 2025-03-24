@@ -491,41 +491,52 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 	log.Println(res.RawLog)
 	log.Println(res.TxHash)
 
-	// Callback on EVM chain
+	// Derive ETH account
 	account, err := wEth.Derive(hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0"), false)
 	if err != nil {
 		log.Printf("Failed to derive account: %v", err)
 		return
 	}
 
-	// Generate privkey and command
+	// Generate privkey
 	privKey, err := wEth.PrivateKeyHex(account)
 	if err != nil {
 		log.Printf("Failed to generate privkey: %v", err)
 		return
 	}
 
-	// Generate message ID
-	messageId := messageType + evmAddress + strconv.FormatUint(vLog.BlockNumber, 10)
+	// Callback on EVM chain
+	log.Printf("Starting mock execution")
+	success := callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10))
+	if !success {
+		time.Sleep(10 * time.Second)
+		success = callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10))
+	}
 
-	// Actually execute command
-	cmdArgs := []string{"send", "--rpc-url", RPC, "--private-key", privKey, vLog.Address.Hex(), "finishMessage(string)", messageId}
+	if !success {
+		log.Printf("All attempts failed")
+	}
+	log.Printf("Mock execution complete")
+}
+
+func callCast(RPC string, privKey string, contract string, signature string, messageId string) bool {
+	cmdArgs := []string{"send", "--rpc-url", RPC, "--private-key", privKey, contract, signature, messageId}
 	cmd := exec.Command("cast", cmdArgs...)
 	log.Printf("Executing: %v", cmd.String())
 
 	// Capture debugging outpot
 	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	/*
-		err = cmd.Run()
-		if err != nil {
-			log.Printf("Failed to run commanad: %v", err)
-		}
-	*/
+	output := stdoutBuf.String()
+
+	// Actually run command, logs errors if callback not executed
+	success := false
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Failed to run commanad: %v", err)
+	}
 
 	// Extract the transaction hash if present
-	var success bool
-	output := stdoutBuf.String()
 	for _, line := range strings.Split(output, "\n") {
 		if strings.HasPrefix(line, "transactionHash") {
 			log.Printf("Tx: %v", strings.TrimSpace(strings.Fields(line)[1]))
@@ -535,16 +546,8 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 		}
 	}
 
-	if !success {
-		time.Sleep(10 * time.Second)
-		/*
-			err = cmd.Run()
-			if err != nil {
-				log.Printf("Failed to retry commanad: %v", err)
-			}
-		*/
-	}
-	log.Printf("Mock execution complete: %v", output)
+	log.Printf("Executing command: %v", output)
+	return success
 }
 
 func chainRep(id uint64) string {
