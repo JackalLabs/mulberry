@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "embed"
 
@@ -515,17 +516,35 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 	// Capture debugging outpot
 	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	// err = cmd.Run()
+	/*
+		err = cmd.Run()
+		if err != nil {
+			log.Printf("Failed to run commanad: %v", err)
+		}
+	*/
 
 	// Extract the transaction hash if present
+	var success bool
 	output := stdoutBuf.String()
 	for _, line := range strings.Split(output, "\n") {
 		if strings.HasPrefix(line, "transactionHash") {
 			log.Printf("Tx: %v", strings.TrimSpace(strings.Fields(line)[1]))
 			break
+		} else if strings.HasPrefix(line, "status") { // detect successful transaction
+			success = strings.Contains(line, "1")
 		}
 	}
-	log.Print("Mock execution complete")
+
+	if !success {
+		time.Sleep(10 * time.Second)
+		/*
+			err = cmd.Run()
+			if err != nil {
+				log.Printf("Failed to retry commanad: %v", err)
+			}
+		*/
+	}
+	log.Printf("Mock execution complete: %v", output)
 }
 
 func chainRep(id uint64) string {
