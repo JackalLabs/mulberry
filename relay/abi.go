@@ -525,9 +525,9 @@ func callCast(RPC string, privKey string, contract string, signature string, mes
 	log.Printf("Executing: %v", cmd.String())
 
 	// Capture debugging outpot
-	var stdoutBuf bytes.Buffer
+	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	output := stdoutBuf.String()
+	cmd.Stderr = &stderrBuf
 
 	// Actually run command, logs errors if callback not executed
 	success := false
@@ -535,6 +535,7 @@ func callCast(RPC string, privKey string, contract string, signature string, mes
 	if err != nil {
 		log.Printf("Failed to run commanad: %v", err)
 	}
+	output := stdoutBuf.String() + stderrBuf.String()
 
 	// Extract the transaction hash if present
 	for _, line := range strings.Split(output, "\n") {
@@ -546,7 +547,7 @@ func callCast(RPC string, privKey string, contract string, signature string, mes
 		}
 	}
 
-	log.Printf("Executing command: %v", output)
+	log.Printf("Executed command: %v", output)
 	return success
 }
 
