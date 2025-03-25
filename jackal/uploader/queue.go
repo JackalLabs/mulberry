@@ -131,6 +131,7 @@ func (q *Queue) UpdateGecko() error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	var priceResp GeckoRes
