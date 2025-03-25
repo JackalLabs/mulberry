@@ -1,13 +1,17 @@
 package relay
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 
 	_ "embed"
 
@@ -19,6 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	hdwallet "github.com/miguelmota/go-ethereum-hdwallet"
 )
 
 //go:embed abi.json
@@ -30,10 +35,11 @@ var (
 	eventABI abi.ABI
 	errABI   error
 
-	evmAddress string
-	cost       int64
-	relayedMsg evmTypes.ExecuteMsg
-	factoryMsg evmTypes.ExecuteFactoryMsg
+	evmAddress  string
+	messageType string
+	cost        int64
+	relayedMsg  evmTypes.ExecuteMsg
+	factoryMsg  evmTypes.ExecuteFactoryMsg
 
 	errUnpack   error
 	errGenerate error
@@ -350,81 +356,99 @@ func generateBlockedSendersMsg(event BlockedSenders) (err error) {
 	return
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
+func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uploader.Queue, chainID uint64, RPC string, jackalContract string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
 	switch eventSig {
 	case expectedSig("PostedFile(address,string,uint64,string,uint64)"):
+		messageType = "PostedFile"
 		eventPostedFile := PostedFile{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, "PostedFile", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, messageType, vLog.Data)
 		errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile)
 	case expectedSig("BoughtStorage(address,string,uint64,uint64,string)"):
+		messageType = "BoughtStorage"
 		eventBoughtStorage := BoughtStorage{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, "BoughtStorage", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, messageType, vLog.Data)
 		errGenerate = generateBoughtStorageMsg(q, eventBoughtStorage)
 	case expectedSig("DeletedFile(address,string,uint64)"):
+		messageType = "DeletedFile"
 		eventDeletedFile := DeletedFile{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, "DeletedFile", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, messageType, vLog.Data)
 		errGenerate = generateDeletedFileMsg(eventDeletedFile)
 	case expectedSig("RequestedReportForm(address,string,string,string,uint64)"):
+		messageType = "RequestedReportForm"
 		eventRequestedReportForm := RequestedReportForm{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, "RequestedReportForm", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, messageType, vLog.Data)
 		errGenerate = generateRequestedReportFormMsg(eventRequestedReportForm)
 	case expectedSig("PostedKey(address,string)"):
+		messageType = "PostedKey"
 		eventPostedKey := PostedKey{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, "PostedKey", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, messageType, vLog.Data)
 		errGenerate = generatePostedKeyMsg(eventPostedKey)
 	case expectedSig("DeletedFileTree(address,string,string)"):
+		messageType = "DeletedFileTree"
 		eventDeletedFileTree := DeletedFileTree{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, "DeletedFileTree", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, messageType, vLog.Data)
 		errGenerate = generateDeletedFileTreeMsg(eventDeletedFileTree)
 	case expectedSig("ProvisionedFileTree(address,string,string,string)"):
+		messageType = "ProvisionedFileTree"
 		eventProvisionedFileTree := ProvisionedFileTree{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, "ProvisionedFileTree", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, messageType, vLog.Data)
 		errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree)
 	case expectedSig("PostedFileTree(address,string,string,string,string,string,string,string)"):
+		messageType = "PostedFileTree"
 		eventPostedFileTree := PostedFileTree{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, "PostedFileTree", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, messageType, vLog.Data)
 		errGenerate = generatePostedFileTreeMsg(eventPostedFileTree)
 	case expectedSig("AddedViewers(address,string,string,string,string)"):
+		messageType = "AddedViewers"
 		eventAddedViewers := AddedViewers{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventAddedViewers, "AddedViewers", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventAddedViewers, messageType, vLog.Data)
 		errGenerate = generateAddedViewersMsg(eventAddedViewers)
 	case expectedSig("RemovedViewers(address,string,string,string)"):
+		messageType = "RemovedViewers"
 		eventRemovedViewers := RemovedViewers{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedViewers, "RemovedViewers", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedViewers, messageType, vLog.Data)
 		errGenerate = generateRemovedViewersMsg(eventRemovedViewers)
 	case expectedSig("ResetViewers(address,string,string)"):
+		messageType = "ResetViewers"
 		eventResetViewers := ResetViewers{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventResetViewers, "ResetViewers", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventResetViewers, messageType, vLog.Data)
 		errGenerate = generateResetViewersMsg(eventResetViewers)
 	case expectedSig("ChangedOwner(address,string,string,string)"):
+		messageType = "ChangedOwner"
 		eventChangedOwner := ChangedOwner{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventChangedOwner, "ChangedOwner", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventChangedOwner, messageType, vLog.Data)
 		errGenerate = generateChangedOwnerMsg(eventChangedOwner)
 	case expectedSig("AddedEditors(address,string,string,string,string)"):
+		messageType = "AddedEditors"
 		eventAddedEditors := AddedEditors{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventAddedEditors, "AddedEditors", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventAddedEditors, messageType, vLog.Data)
 		errGenerate = generateAddedEditorsMsg(eventAddedEditors)
 	case expectedSig("RemovedEditors(address,string,string,string)"):
+		messageType = "RemovedEditors"
 		eventRemovedEditors := RemovedEditors{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedEditors, "RemovedEditors", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedEditors, messageType, vLog.Data)
 		errGenerate = generateRemovedEditorsMsg(eventRemovedEditors)
 	case expectedSig("ResetEditors(address,string,string)"):
+		messageType = "ResetEditors"
 		eventResetEditors := ResetEditors{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventResetEditors, "ResetEditors", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventResetEditors, messageType, vLog.Data)
 		errGenerate = generateResetEditorsMsg(eventResetEditors)
 	case expectedSig("CreatedNotification(address,string,string,string)"):
+		messageType = "CreatedNotification"
 		eventCreatedNotification := CreatedNotification{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventCreatedNotification, "CreatedNotification", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventCreatedNotification, messageType, vLog.Data)
 		errGenerate = generateCreatedNotificationMsg(eventCreatedNotification)
 	case expectedSig("DeletedNotification(address,string,uint64)"):
+		messageType = "DeletedNotification"
 		eventDeletedNotification := DeletedNotification{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedNotification, "DeletedNotification", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedNotification, messageType, vLog.Data)
 		errGenerate = generateDeletedNotificationMsg(eventDeletedNotification)
 	case expectedSig("BlockedSenders(address,string[])"):
+		messageType = "BlockedSenders"
 		eventBlockedSenders := BlockedSenders{}
-		errUnpack = eventABI.UnpackIntoInterface(&eventBlockedSenders, "BlockedSenders", vLog.Data)
+		errUnpack = eventABI.UnpackIntoInterface(&eventBlockedSenders, messageType, vLog.Data)
 		errGenerate = generateBlockedSendersMsg(eventBlockedSenders)
 	default:
 		log.Fatal("Failed to unpack log data into any event type")
@@ -466,6 +490,64 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uin
 
 	log.Println(res.RawLog)
 	log.Println(res.TxHash)
+
+	// Derive ETH account
+	account, err := wEth.Derive(hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0"), false)
+	if err != nil {
+		log.Printf("Failed to derive account: %v", err)
+		return
+	}
+
+	// Generate privkey
+	privKey, err := wEth.PrivateKeyHex(account)
+	if err != nil {
+		log.Printf("Failed to generate privkey: %v", err)
+		return
+	}
+
+	// Callback on EVM chain
+	log.Printf("Starting mock execution")
+	success := callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10))
+	if !success {
+		time.Sleep(10 * time.Second)
+		success = callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10))
+	}
+
+	if !success {
+		log.Printf("All attempts failed")
+	}
+	log.Printf("Mock execution complete")
+}
+
+func callCast(RPC string, privKey string, contract string, signature string, messageId string) bool {
+	cmdArgs := []string{"send", "--rpc-url", RPC, "--private-key", privKey, contract, signature, messageId}
+	cmd := exec.Command("cast", cmdArgs...)
+	log.Printf("Executing: %v", cmd.String())
+
+	// Capture debugging outpot
+	var stdoutBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	output := stdoutBuf.String()
+
+	// Actually run command, logs errors if callback not executed
+	success := false
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Failed to run commanad: %v", err)
+	}
+
+	// Extract the transaction hash if present
+	for _, line := range strings.Split(output, "\n") {
+		if strings.HasPrefix(line, "transactionHash") {
+			log.Printf("Tx: %v", strings.TrimSpace(strings.Fields(line)[1]))
+			break
+		} else if strings.HasPrefix(line, "status") { // detect successful transaction
+			success = strings.Contains(line, "1")
+		}
+	}
+
+	log.Printf("Executing command: %v", output)
+	return success
 }
 
 func chainRep(id uint64) string {
