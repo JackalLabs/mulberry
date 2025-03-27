@@ -163,6 +163,8 @@ Transaction hash: 0xe73faa0971d3a1e2d3059eadc3965d1b94585578b990ae652354ff865b58
 # config
 The most up-to-date config should be at [config/config.go](config/config.go).
 ```yaml
+mulberry_settings:
+    cast_path: /bin/cast
 jackal_config:
     rpc: https://testnet-rpc.jackalprotocol.com:443
     grpc: jackal-testnet-grpc.polkachu.com:17590
