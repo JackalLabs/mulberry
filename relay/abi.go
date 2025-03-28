@@ -356,7 +356,7 @@ func generateBlockedSendersMsg(event BlockedSenders) (err error) {
 	return
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uploader.Queue, chainID uint64, RPC string, jackalContract string) {
+func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uploader.Queue, chainID uint64, RPC string, jackalContract string, castPath string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
 	switch eventSig {
@@ -507,10 +507,10 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 
 	// Callback on EVM chain
 	log.Printf("Starting mock execution")
-	success := callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10))
+	success := callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10), castPath)
 	if !success {
 		time.Sleep(10 * time.Second)
-		success = callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10))
+		success = callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10), castPath)
 	}
 
 	if !success {
@@ -519,9 +519,9 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 	log.Printf("Mock execution complete")
 }
 
-func callCast(RPC string, privKey string, contract string, signature string, messageId string) bool {
+func callCast(RPC string, privKey string, contract string, signature string, messageId string, castPath string) bool {
 	cmdArgs := []string{"send", "--rpc-url", RPC, "--private-key", privKey, contract, signature, messageId}
-	cmd := exec.Command("cast", cmdArgs...)
+	cmd := exec.Command(castPath, cmdArgs...)
 	log.Printf("Executing: %v", cmd.String())
 
 	// Capture debugging outpot

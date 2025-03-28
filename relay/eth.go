@@ -96,7 +96,7 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 						err := waitForReceipt(wsClient, vLog.TxHash, network, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
 								if l.Address.Hex() == contractAddress.Hex() && len(l.Data) > 0 {
-									handleLog(l, a.w, a.wEth, a.q, network.ChainID, network.RPC, jackalContract)
+									handleLog(l, a.w, a.wEth, a.q, network.ChainID, network.RPC, jackalContract, a.cfg.MulberrySettings.CastPath)
 								}
 							}
 						})

@@ -6,8 +6,13 @@ import (
 )
 
 type Config struct {
-	JackalConfig   JackalConfig    `yaml:"jackal_config" mapstructure:"jackal_config"`
-	NetworksConfig []NetworkConfig `yaml:"networks_config" mapstructure:"networks_config"`
+	MulberrySettings MulberrySettings `yaml:"mulberry_settings" mapstructure:"mulberry_settings"`
+	JackalConfig     JackalConfig     `yaml:"jackal_config" mapstructure:"jackal_config"`
+	NetworksConfig   []NetworkConfig  `yaml:"networks_config" mapstructure:"networks_config"`
+}
+
+type MulberrySettings struct {
+	CastPath string `yaml:"cast_path" mapstructure:"cast_path"`
 }
 
 type JackalConfig struct {
@@ -28,6 +33,7 @@ type NetworkConfig struct {
 
 func DefaultConfig() Config {
 	return Config{
+		MulberrySettings: MulberrySettings{CastPath: "/bin/cast"},
 		JackalConfig: JackalConfig{
 			RPC:      "https://testnet-rpc.jackalprotocol.com:443",
 			GRPC:     "jackal-testnet-grpc.polkachu.com:17590",
