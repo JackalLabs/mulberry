@@ -93,6 +93,28 @@ func DefaultConfig() Config {
 	}
 }
 
+func DefaultMainnetConfig() Config {
+	return Config{
+		MulberrySettings: MulberrySettings{CastPath: "/bin/cast"},
+		JackalConfig: JackalConfig{
+			RPC:      "https://jackal-storage-rpc.brocha.in:443",
+			GRPC:     "https://jackal-storage-grpc.brocha.in:443",
+			SeedFile: "seed.json",
+			Contract: "jkl1j08452mqwadp8xu25kn9rleyl2gufgfjnv0sn8dvynynakkjukcqct2hme",
+		},
+		NetworksConfig: []NetworkConfig{
+			{
+				Name:     "Base",
+				RPC:      "https://base-rpc.publicnode.com",
+				WS:       "wss://base-rpc.publicnode.com",
+				Contract: "0x60766928613B818053E9922fC655aB9B7126a02E",
+				ChainID:  8453,
+				Finality: 2,
+			},
+		},
+	}
+}
+
 func (c Config) Export() ([]byte, error) {
 	return yaml.Marshal(c)
 }
