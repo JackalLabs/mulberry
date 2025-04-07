@@ -24,10 +24,12 @@ contract JackalBridge is Ownable, Jackal {
         _;
     }
 
-    function finishMessage(string memory id) public onlyOwnerOrRelay { // needs to be from a relayer
-        for (uint i = 0; i < messages.length; i ++) {
+    function finishMessage(string memory id) public onlyOwnerOrRelay {
+        // needs to be from a relayer
+        for (uint256 i = 0; i < messages.length; i++) {
             JackalMessage memory m = messages[i];
-            if (Strings.equal(m.id, id)) { // if we found the item we're looking for
+            if (Strings.equal(m.id, id)) {
+                // if we found the item we're looking for
                 _remove(i);
             }
         }
