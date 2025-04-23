@@ -507,10 +507,11 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 
 	// Callback on EVM chain
 	log.Printf("Starting mock execution")
-	success := callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10), castPath)
+	messageID := messageType + strings.ToLower(evmAddress) + strconv.FormatUint(vLog.BlockNumber, 10)
+	success := callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageID, castPath)
 	if !success {
 		time.Sleep(10 * time.Second)
-		success = callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageType+evmAddress+strconv.FormatUint(vLog.BlockNumber, 10), castPath)
+		success = callCast(RPC, privKey, vLog.Address.Hex(), "finishMessage(string)", messageID, castPath)
 	}
 
 	if !success {
