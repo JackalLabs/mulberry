@@ -14,7 +14,7 @@ contract StorageDrawer {
 
     function upload(string memory merkle, uint64 filesize) public payable {
         // takes file and size
-        jackalBridge.postFileFrom{value: msg.value}(msg.sender, merkle, filesize, "", 30); // call bridge method
+        jackalBridge.postFileFrom{value: msg.value}(msg.sender, merkle, filesize, "", 73000); // call bridge for 200 years
         // method list https://github.com/JackalLabs/mulberry/blob/main/forge/src/JackalInterface.sol
         cabinet[msg.sender].push(merkle); // record file owner
     }
