@@ -457,6 +457,9 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 		log.Fatalf("Failed to unpack event %v: %v %v", eventSig, errUnpack, errGenerate)
 	}
 
+	fmt.Println("message: ")
+	fmt.Println(msg)
+
 	factoryMsg := evmTypes.ExecuteFactoryMsg{
 		CallBindings: &evmTypes.ExecuteMsgCallBindings{
 			EvmAddress: &evmAddress,
