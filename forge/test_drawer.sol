@@ -140,9 +140,18 @@ contract StorageDrawer {
         jackalBridge = JackalInterface(_jackalAddress); // use jackal bridge
     }
 
+    function upload(string memory merkle, uint64 filesize) public payable {
+        upload(merkle, filesize, msg.value);
+    }
+
     function upload(string memory merkle, uint64 filesize, uint value) public payable {
+        upload(merkle, filesize, value, 73000); // uploading for 200 years by default
+    }
+
+    function upload(string memory merkle, uint64 filesize, uint value, uint64 dayCount) public payable {
+        require(dayCount > 31, "day count must be more than 31");
         // takes file and size
-        jackalBridge.postFileFrom{value: value}(msg.sender, merkle, filesize, "", 73000); // call bridge for 200 years
+        jackalBridge.postFileFrom{value: value}(msg.sender, merkle, filesize, "", dayCount); // call bridge for 200 years
         // method list https://github.com/JackalLabs/mulberry/blob/main/forge/src/JackalInterface.sol
 
         cabinet[msg.sender].push(FileDetails(msg.sender, merkle, block.number)); // record file owner
@@ -151,6 +160,12 @@ contract StorageDrawer {
     function uploadMany(string[] memory merkle, uint64[] memory filesize, uint[] memory values) public payable {
         for (uint i=0; i<merkle.length; i++) {
             upload(merkle[i], filesize[i], values[i]);
+        }
+    }
+
+    function uploadMany(string[] memory merkle, uint64[] memory filesize, uint[] memory values, uint64 dayCount) public payable {
+        for (uint i=0; i<merkle.length; i++) {
+            upload(merkle[i], filesize[i], values[i], dayCount);
         }
     }
 

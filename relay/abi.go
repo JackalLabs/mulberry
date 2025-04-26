@@ -31,54 +31,43 @@ var ABI string
 
 // from `forge inspect Jackal abi`
 
-var (
-	eventABI abi.ABI
-	errABI   error
-
-	evmAddress  string
-	messageType string
-	cost        int64
-	relayedMsg  evmTypes.ExecuteMsg
-	factoryMsg  evmTypes.ExecuteFactoryMsg
-
-	errUnpack   error
-	errGenerate error
-)
+var eventABI abi.ABI
 
 func init() {
-	eventABI, errABI = abi.JSON(strings.NewReader(ABI))
+	e, errABI := abi.JSON(strings.NewReader(ABI))
 	if errABI != nil {
 		log.Fatalf("Failed to parse ABI: %v", errABI)
 	}
+	eventABI = e
 }
 
-func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, event PostedFile) (err error) {
+func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, event PostedFile) (string, *evmTypes.ExecuteMsg, int64, error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
 	merkleBase64, err := merkleToString(event.Merkle)
 	if err != nil {
-		return
+		return evmAddress, nil, 0, err
 	}
 
 	abci, err := w.Client.RPCClient.ABCIInfo(context.Background())
 	if err != nil {
 		log.Printf("Failed to query ABCI: %v", err)
-		return
+		return evmAddress, nil, 0, err
 	}
 
 	note := make(map[string]any)
 	err = json.Unmarshal([]byte(event.Note), &note)
 	if err != nil && event.Note != "" {
 		log.Printf("Could not unmarshal: %v", err)
-		return
+		return evmAddress, nil, 0, err
 	}
 
 	note["relayed"] = map[string]any{"chain_id": chainRep(chainID), "for": evmAddress}
 	newNote, err := json.Marshal(note)
 	if err != nil {
 		log.Printf("Failed to add memo: %v", err)
-		return
+		return evmAddress, nil, 0, err
 	}
 
 	// calculate expires field (event.Expires is the number of days)
@@ -90,7 +79,7 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 	// fileSize and maxProofs (total storage used)
 	fileSize, maxProofs := int64(event.Size), int64(3)
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
 			Merkle:        merkleBase64,
 			FileSize:      fileSize,
@@ -102,15 +91,15 @@ func generatePostedFileMsg(w *wallet.Wallet, q *uploader.Queue, chainID uint64, 
 		},
 	}
 
-	cost = int64(float64(q.GetCost(fileSize*maxProofs, int64(event.Expires)*24)) * 1.2)
-	return
+	cost := int64(float64(q.GetCost(fileSize*maxProofs, int64(event.Expires)*24)) * 1.2)
+	return evmAddress, &relayedMsg, cost, nil
 }
 
-func generateBoughtStorageMsg(q *uploader.Queue, event BoughtStorage) (err error) {
+func generateBoughtStorageMsg(q *uploader.Queue, event BoughtStorage) (string, *evmTypes.ExecuteMsg, int64) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		BuyStorage: &evmTypes.ExecuteMsgBuyStorage{
 			ForAddress:   event.ForAddress,
 			DurationDays: int64(event.DurationDays),
@@ -120,38 +109,38 @@ func generateBoughtStorageMsg(q *uploader.Queue, event BoughtStorage) (err error
 		},
 	}
 
-	cost = int64(float64(q.GetCost(int64(event.SizeBytes), int64(event.DurationDays)*24)) * 1.2)
-	return
+	cost := int64(float64(q.GetCost(int64(event.SizeBytes), int64(event.DurationDays)*24)) * 1.2)
+	return evmAddress, &relayedMsg, cost
 }
 
-func generateDeletedFileMsg(event DeletedFile) (err error) {
+func generateDeletedFileMsg(event DeletedFile) (string, *evmTypes.ExecuteMsg, error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
 	merkleBase64, err := merkleToString(event.Merkle)
 	if err != nil {
-		return
+		return evmAddress, nil, err
 	}
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		DeleteFile: &evmTypes.ExecuteMsgDeleteFile{
 			Merkle: merkleBase64,
 			Start:  int64(event.Start),
 		},
 	}
-	return
+	return evmAddress, &relayedMsg, nil
 }
 
-func generateRequestedReportFormMsg(event RequestedReportForm) (err error) {
+func generateRequestedReportFormMsg(event RequestedReportForm) (string, *evmTypes.ExecuteMsg, error) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
 	merkleBase64, err := merkleToString(event.Merkle)
 	if err != nil {
-		return
+		return evmAddress, nil, err
 	}
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		RequestReportForm: &evmTypes.ExecuteMsgRequestReportForm{
 			Prover: event.Prover,
 			Merkle: merkleBase64,
@@ -159,53 +148,53 @@ func generateRequestedReportFormMsg(event RequestedReportForm) (err error) {
 			Start:  int64(event.Start),
 		},
 	}
-	return
+	return evmAddress, &relayedMsg, nil
 }
 
-func generatePostedKeyMsg(event PostedKey) (err error) {
+func generatePostedKeyMsg(event PostedKey) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		PostKey: &evmTypes.ExecuteMsgPostKey{
 			Key: event.Key,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateDeletedFileTreeMsg(event DeletedFileTree) (err error) {
+func generateDeletedFileTreeMsg(event DeletedFileTree) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		DeleteFileTree: &evmTypes.ExecuteMsgDeleteFileTree{
 			HashPath: event.HashPath,
 			Account:  event.Account,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateProvisionedFiletreeMsg(event ProvisionedFileTree) (err error) {
+func generateProvisionedFiletreeMsg(event ProvisionedFileTree) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		ProvisionFileTree: &evmTypes.ExecuteMsgProvisionFileTree{
 			Editors:        event.Editors,
 			Viewers:        event.Viewers,
 			TrackingNumber: event.TrackingNumber,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generatePostedFileTreeMsg(event PostedFileTree) (err error) {
+func generatePostedFileTreeMsg(event PostedFileTree) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		PostFileTree: &evmTypes.ExecuteMsgPostFileTree{
 			Account:        event.Account,
 			HashParent:     event.HashParent,
@@ -216,14 +205,14 @@ func generatePostedFileTreeMsg(event PostedFileTree) (err error) {
 			TrackingNumber: event.TrackingNumber,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateAddedViewersMsg(event AddedViewers) (err error) {
+func generateAddedViewersMsg(event AddedViewers) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		AddViewers: &evmTypes.ExecuteMsgAddViewers{
 			ViewerIds:  event.ViewerIds,
 			ViewerKeys: event.ViewerKeys,
@@ -231,55 +220,55 @@ func generateAddedViewersMsg(event AddedViewers) (err error) {
 			FileOwner:  event.FileOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateRemovedViewersMsg(event RemovedViewers) (err error) {
+func generateRemovedViewersMsg(event RemovedViewers) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		RemoveViewers: &evmTypes.ExecuteMsgRemoveViewers{
 			ViewerIds: event.ViewerIds,
 			Address:   event.ForAddress,
 			FileOwner: event.FileOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateResetViewersMsg(event ResetViewers) (err error) {
+func generateResetViewersMsg(event ResetViewers) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		ResetViewers: &evmTypes.ExecuteMsgResetViewers{
 			Address:   event.ForAddress,
 			FileOwner: event.FileOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateChangedOwnerMsg(event ChangedOwner) (err error) {
+func generateChangedOwnerMsg(event ChangedOwner) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		ChangeOwner: &evmTypes.ExecuteMsgChangeOwner{
 			Address:   event.ForAddress,
 			FileOwner: event.FileOwner,
 			NewOwner:  event.NewOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateAddedEditorsMsg(event AddedEditors) (err error) {
+func generateAddedEditorsMsg(event AddedEditors) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		AddEditors: &evmTypes.ExecuteMsgAddEditors{
 			EditorIds:  event.EditorIds,
 			EditorKeys: event.EditorKeys,
@@ -287,73 +276,73 @@ func generateAddedEditorsMsg(event AddedEditors) (err error) {
 			FileOwner:  event.FileOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateRemovedEditorsMsg(event RemovedEditors) (err error) {
+func generateRemovedEditorsMsg(event RemovedEditors) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		RemoveEditors: &evmTypes.ExecuteMsgRemoveEditors{
 			EditorIds: event.EditorIds,
 			Address:   event.ForAddress,
 			FileOwner: event.FileOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateResetEditorsMsg(event ResetEditors) (err error) {
+func generateResetEditorsMsg(event ResetEditors) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		ResetEditors: &evmTypes.ExecuteMsgResetEditors{
 			Address:   event.ForAddress,
 			FileOwner: event.FileOwner,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateCreatedNotificationMsg(event CreatedNotification) (err error) {
+func generateCreatedNotificationMsg(event CreatedNotification) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		CreateNotification: &evmTypes.ExecuteMsgCreateNotification{
 			To:              event.To,
 			Contents:        event.Contents,
 			PrivateContents: event.PrivateContents,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateDeletedNotificationMsg(event DeletedNotification) (err error) {
+func generateDeletedNotificationMsg(event DeletedNotification) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		DeleteNotification: &evmTypes.ExecuteMsgDeleteNotification{
 			From: event.NotificationFrom,
 			Time: int64(event.Time),
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
-func generateBlockedSendersMsg(event BlockedSenders) (err error) {
+func generateBlockedSendersMsg(event BlockedSenders) (string, *evmTypes.ExecuteMsg) {
 	log.Printf("Event details: %+v", event)
-	evmAddress = event.From.String()
+	evmAddress := event.From.String()
 
-	relayedMsg = evmTypes.ExecuteMsg{
+	relayedMsg := evmTypes.ExecuteMsg{
 		BlockedSenders: &evmTypes.ExecuteMsgBlockedSenders{
 			ToBlock: event.ToBlock,
 		},
 	}
-	return
+	return evmAddress, &relayedMsg
 }
 
 func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uploader.Queue, chainID uint64, RPC string, jackalContract string, castPath string) {
@@ -363,97 +352,103 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 	for _, topic := range vLog.Topics {
 		fmt.Printf("%s | %s\n", topic.Hex(), topic.String())
 	}
+	var messageType string
+	var errUnpack error
+	var errGenerate error
+	var msg *evmTypes.ExecuteMsg
+	var evmAddress string
+	var cost int64
 	switch eventSig {
 	case expectedSig("PostedFile(address,string,uint64,string,uint64)"):
 		messageType = "PostedFile"
 		eventPostedFile := PostedFile{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFile, messageType, vLog.Data)
-		errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile)
+		evmAddress, msg, cost, errGenerate = generatePostedFileMsg(w, q, chainID, eventPostedFile)
 	case expectedSig("BoughtStorage(address,string,uint64,uint64,string)"):
 		messageType = "BoughtStorage"
 		eventBoughtStorage := BoughtStorage{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventBoughtStorage, messageType, vLog.Data)
-		errGenerate = generateBoughtStorageMsg(q, eventBoughtStorage)
+		evmAddress, msg, cost = generateBoughtStorageMsg(q, eventBoughtStorage)
 	case expectedSig("DeletedFile(address,string,uint64)"):
 		messageType = "DeletedFile"
 		eventDeletedFile := DeletedFile{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFile, messageType, vLog.Data)
-		errGenerate = generateDeletedFileMsg(eventDeletedFile)
+		evmAddress, msg, errGenerate = generateDeletedFileMsg(eventDeletedFile)
 	case expectedSig("RequestedReportForm(address,string,string,string,uint64)"):
 		messageType = "RequestedReportForm"
 		eventRequestedReportForm := RequestedReportForm{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventRequestedReportForm, messageType, vLog.Data)
-		errGenerate = generateRequestedReportFormMsg(eventRequestedReportForm)
+		evmAddress, msg, errGenerate = generateRequestedReportFormMsg(eventRequestedReportForm)
 	case expectedSig("PostedKey(address,string)"):
 		messageType = "PostedKey"
 		eventPostedKey := PostedKey{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventPostedKey, messageType, vLog.Data)
-		errGenerate = generatePostedKeyMsg(eventPostedKey)
+		evmAddress, msg = generatePostedKeyMsg(eventPostedKey)
 	case expectedSig("DeletedFileTree(address,string,string)"):
 		messageType = "DeletedFileTree"
 		eventDeletedFileTree := DeletedFileTree{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedFileTree, messageType, vLog.Data)
-		errGenerate = generateDeletedFileTreeMsg(eventDeletedFileTree)
+		evmAddress, msg = generateDeletedFileTreeMsg(eventDeletedFileTree)
 	case expectedSig("ProvisionedFileTree(address,string,string,string)"):
 		messageType = "ProvisionedFileTree"
 		eventProvisionedFileTree := ProvisionedFileTree{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventProvisionedFileTree, messageType, vLog.Data)
-		errGenerate = generateProvisionedFiletreeMsg(eventProvisionedFileTree)
+		evmAddress, msg = generateProvisionedFiletreeMsg(eventProvisionedFileTree)
 	case expectedSig("PostedFileTree(address,string,string,string,string,string,string,string)"):
 		messageType = "PostedFileTree"
 		eventPostedFileTree := PostedFileTree{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventPostedFileTree, messageType, vLog.Data)
-		errGenerate = generatePostedFileTreeMsg(eventPostedFileTree)
+		evmAddress, msg = generatePostedFileTreeMsg(eventPostedFileTree)
 	case expectedSig("AddedViewers(address,string,string,string,string)"):
 		messageType = "AddedViewers"
 		eventAddedViewers := AddedViewers{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventAddedViewers, messageType, vLog.Data)
-		errGenerate = generateAddedViewersMsg(eventAddedViewers)
+		evmAddress, msg = generateAddedViewersMsg(eventAddedViewers)
 	case expectedSig("RemovedViewers(address,string,string,string)"):
 		messageType = "RemovedViewers"
 		eventRemovedViewers := RemovedViewers{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedViewers, messageType, vLog.Data)
-		errGenerate = generateRemovedViewersMsg(eventRemovedViewers)
+		evmAddress, msg = generateRemovedViewersMsg(eventRemovedViewers)
 	case expectedSig("ResetViewers(address,string,string)"):
 		messageType = "ResetViewers"
 		eventResetViewers := ResetViewers{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventResetViewers, messageType, vLog.Data)
-		errGenerate = generateResetViewersMsg(eventResetViewers)
+		evmAddress, msg = generateResetViewersMsg(eventResetViewers)
 	case expectedSig("ChangedOwner(address,string,string,string)"):
 		messageType = "ChangedOwner"
 		eventChangedOwner := ChangedOwner{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventChangedOwner, messageType, vLog.Data)
-		errGenerate = generateChangedOwnerMsg(eventChangedOwner)
+		evmAddress, msg = generateChangedOwnerMsg(eventChangedOwner)
 	case expectedSig("AddedEditors(address,string,string,string,string)"):
 		messageType = "AddedEditors"
 		eventAddedEditors := AddedEditors{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventAddedEditors, messageType, vLog.Data)
-		errGenerate = generateAddedEditorsMsg(eventAddedEditors)
+		evmAddress, msg = generateAddedEditorsMsg(eventAddedEditors)
 	case expectedSig("RemovedEditors(address,string,string,string)"):
 		messageType = "RemovedEditors"
 		eventRemovedEditors := RemovedEditors{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventRemovedEditors, messageType, vLog.Data)
-		errGenerate = generateRemovedEditorsMsg(eventRemovedEditors)
+		evmAddress, msg = generateRemovedEditorsMsg(eventRemovedEditors)
 	case expectedSig("ResetEditors(address,string,string)"):
 		messageType = "ResetEditors"
 		eventResetEditors := ResetEditors{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventResetEditors, messageType, vLog.Data)
-		errGenerate = generateResetEditorsMsg(eventResetEditors)
+		evmAddress, msg = generateResetEditorsMsg(eventResetEditors)
 	case expectedSig("CreatedNotification(address,string,string,string)"):
 		messageType = "CreatedNotification"
 		eventCreatedNotification := CreatedNotification{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventCreatedNotification, messageType, vLog.Data)
-		errGenerate = generateCreatedNotificationMsg(eventCreatedNotification)
+		evmAddress, msg = generateCreatedNotificationMsg(eventCreatedNotification)
 	case expectedSig("DeletedNotification(address,string,uint64)"):
 		messageType = "DeletedNotification"
 		eventDeletedNotification := DeletedNotification{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventDeletedNotification, messageType, vLog.Data)
-		errGenerate = generateDeletedNotificationMsg(eventDeletedNotification)
+		evmAddress, msg = generateDeletedNotificationMsg(eventDeletedNotification)
 	case expectedSig("BlockedSenders(address,string[])"):
 		messageType = "BlockedSenders"
 		eventBlockedSenders := BlockedSenders{}
 		errUnpack = eventABI.UnpackIntoInterface(&eventBlockedSenders, messageType, vLog.Data)
-		errGenerate = generateBlockedSendersMsg(eventBlockedSenders)
+		evmAddress, msg = generateBlockedSendersMsg(eventBlockedSenders)
 	default:
 		log.Fatal("Failed to unpack log data into any event type")
 	}
@@ -462,27 +457,27 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uplo
 		log.Fatalf("Failed to unpack event %v: %v %v", eventSig, errUnpack, errGenerate)
 	}
 
-	factoryMsg = evmTypes.ExecuteFactoryMsg{
+	factoryMsg := evmTypes.ExecuteFactoryMsg{
 		CallBindings: &evmTypes.ExecuteMsgCallBindings{
 			EvmAddress: &evmAddress,
-			Msg:        &relayedMsg,
+			Msg:        msg,
 		},
 	}
 
-	msg := &wasm.MsgExecuteContract{
+	executeContractMessage := &wasm.MsgExecuteContract{
 		Sender:   w.AccAddress(),
 		Contract: jackalContract,
 		Msg:      factoryMsg.Encode(),
 		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ujkl", cost)),
 	}
 
-	log.Printf("execute msg: %v", msg)
-	if err := msg.ValidateBasic(); err != nil {
+	log.Printf("execute msg: %v", executeContractMessage)
+	if err := executeContractMessage.ValidateBasic(); err != nil {
 		log.Fatalf("Failed to validate message: %v", err)
 		return
 	}
 
-	res, err := q.Post(msg)
+	res, err := q.Post(executeContractMessage)
 	if err != nil {
 		log.Fatalf("Failed to post message: %v", err)
 		return
