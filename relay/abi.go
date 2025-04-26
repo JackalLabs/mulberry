@@ -359,6 +359,10 @@ func generateBlockedSendersMsg(event BlockedSenders) (err error) {
 func handleLog(vLog *types.Log, w *wallet.Wallet, wEth *hdwallet.Wallet, q *uploader.Queue, chainID uint64, RPC string, jackalContract string, castPath string) {
 	// https://goethereumbook.org/event-read/#topics
 	eventSig := vLog.Topics[0].Hex()
+	fmt.Printf("topics: %d\n", len(vLog.Topics))
+	for _, topic := range vLog.Topics {
+		fmt.Printf("%s | %s\n", topic.Hex(), topic.String())
+	}
 	switch eventSig {
 	case expectedSig("PostedFile(address,string,uint64,string,uint64)"):
 		messageType = "PostedFile"
