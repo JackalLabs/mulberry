@@ -94,13 +94,9 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 
 					ll := ilog
 					go func(loggy types.Log) {
-						err := waitForReceipt(wsClient, loggy.TxHash, network, func(receipt *types.Receipt) {
-							for _, l := range receipt.Logs {
-								subLogger.Printf("Inner log index: %d", ilog.Index)
-								if l.Address.Hex() == contractAddress.Hex() && len(l.Data) > 0 {
-									handleLog(l, a.w, a.wEth, a.q, network.ChainID, network.RPC, jackalContract, a.cfg.MulberrySettings.CastPath)
-								}
-							}
+						err := waitForReceipt(wsClient, loggy.TxHash, network, func(_ *types.Receipt) {
+							subLogger.Printf("Inner log index: %d", ilog.Index)
+							handleLog(&ilog, a.w, a.wEth, a.q, network.ChainID, network.RPC, jackalContract, a.cfg.MulberrySettings.CastPath)
 						})
 						if err != nil {
 							subLogger.Printf("Error getting receipt for tx %s: %v", loggy.TxHash.Hex(), err)
