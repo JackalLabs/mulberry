@@ -89,21 +89,23 @@ func (a *App) ListenToEthereumNetwork(network config.NetworkConfig, wg *sync.Wai
 				case err := <-sub.Err():
 					subLogger.Printf("Subscription error, reconnecting: %v", err)
 					return // Break out of the loop to retry
-				case vLog := <-logs:
-					subLogger.Printf("Log received: %s", vLog.Address.Hex())
+				case ilog := <-logs:
+					subLogger.Printf("Log received: %s", ilog.Address.Hex())
 
-					go func(vLog types.Log) {
-						err := waitForReceipt(wsClient, vLog.TxHash, network, func(receipt *types.Receipt) {
+					ll := ilog
+					go func(loggy types.Log) {
+						err := waitForReceipt(wsClient, loggy.TxHash, network, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
+								subLogger.Printf("Inner log index: %d", ilog.Index)
 								if l.Address.Hex() == contractAddress.Hex() && len(l.Data) > 0 {
 									handleLog(l, a.w, a.wEth, a.q, network.ChainID, network.RPC, jackalContract, a.cfg.MulberrySettings.CastPath)
 								}
 							}
 						})
 						if err != nil {
-							subLogger.Printf("Error getting receipt for tx %s: %v", vLog.TxHash.Hex(), err)
+							subLogger.Printf("Error getting receipt for tx %s: %v", loggy.TxHash.Hex(), err)
 						}
-					}(vLog)
+					}(ll)
 				}
 			}
 		}()
