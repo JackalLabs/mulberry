@@ -27,7 +27,7 @@ contract StorageDrawer {
     }
 
     function upload(string memory merkle, uint64 filesize, uint value, uint64 dayCount) public payable {
-        require(dayCount > 31, "day count must be more than 31");
+        require(dayCount > 30, "day count must be more than 30");
         // takes file and size
         jackalBridge.postFileFrom{value: value}(msg.sender, merkle, filesize, "", dayCount); // call bridge for 200 years
         // method list https://github.com/JackalLabs/mulberry/blob/main/forge/src/JackalInterface.sol
