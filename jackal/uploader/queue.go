@@ -3,10 +3,11 @@ package uploader
 import (
 	"encoding/json"
 	"fmt"
-	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 	"net/http"
 	"sync"
 	"time"
+
+	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 
 	"github.com/rs/zerolog/log"
 
@@ -90,13 +91,11 @@ func (q *Queue) popAndPost(count int) {
 		q.messages = append(q.messages, newMessages...)
 		return
 	}
-	success = true
 	for _, msg := range newMessages {
 		msg.r = res
 		msg.err = err
 		msg.wg.Done()
 	}
-
 }
 
 func (q *Queue) Post(msg sdk.Msg) (*sdk.TxResponse, error) {
