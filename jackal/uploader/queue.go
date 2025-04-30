@@ -3,6 +3,7 @@ package uploader
 import (
 	"encoding/json"
 	"fmt"
+	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 	"net/http"
 	"sync"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
 )
 
@@ -82,15 +82,21 @@ func (q *Queue) popAndPost(count int) {
 	res, err := q.w.BroadcastTxCommit(data)
 	if err != nil {
 		fmt.Println(err)
+		q.messages = append(q.messages, newMessages...)
+		return
 	}
 	if res == nil {
 		fmt.Println("response is for sure empty")
+		q.messages = append(q.messages, newMessages...)
+		return
 	}
+	success = true
 	for _, msg := range newMessages {
 		msg.r = res
 		msg.err = err
 		msg.wg.Done()
 	}
+
 }
 
 func (q *Queue) Post(msg sdk.Msg) (*sdk.TxResponse, error) {
