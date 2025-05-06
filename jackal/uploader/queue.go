@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
+	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
+
 	"github.com/rs/zerolog/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
 )
 
@@ -66,31 +67,31 @@ func (q *Queue) popAndPost(count int) {
 		count = len(q.messages)
 	}
 
-	msgs := make([]*MsgHolder, count)
+	newMessages := q.messages[0:count]
+	q.messages = q.messages[count:]
 
-	for i := 0; i < count; i++ {
-		m := q.messages[0]
-		q.messages = q.messages[1:]
-		msgs[i] = m
-	}
+	var msgs []sdk.Msg
 
-	ms := make([]sdk.Msg, count)
-	for i, msg := range msgs {
-		ms[i] = msg.m
+	for _, message := range newMessages {
+		msgs = append(msgs, message.m)
 	}
 
 	data := walletTypes.NewTransactionData(
-		ms...,
+		msgs...,
 	).WithGasAuto().WithFeeAuto()
 
 	res, err := q.w.BroadcastTxCommit(data)
 	if err != nil {
 		fmt.Println(err)
+		q.messages = append(q.messages, newMessages...)
+		return
 	}
 	if res == nil {
 		fmt.Println("response is for sure empty")
+		q.messages = append(q.messages, newMessages...)
+		return
 	}
-	for _, msg := range msgs {
+	for _, msg := range newMessages {
 		msg.r = res
 		msg.err = err
 		msg.wg.Done()
