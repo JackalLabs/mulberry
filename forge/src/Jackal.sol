@@ -143,7 +143,9 @@ abstract contract Jackal {
     {
         require(expires >= 30 || expires == 0);
         if (expires != 0) {
-            uint256 pE = getStoragePrice(filesize, 2400); // 12 * 200 months
+            expires = (expires / 30) * 30; // floor it
+
+            uint256 pE = getStoragePrice(filesize, expires / 30); // days to months
             require(msg.value >= pE, string.concat("Insufficient payment, need ", Strings.toString(pE), " wei"));
         }
         newMessage(from, "PostedFile");
